@@ -14,7 +14,7 @@
                     v-if="wifiNet !== null"
                     name="window-close"
                     color="primary"
-                /> -->
+                />-->
                 <svg-icon name="menu-down" color="primary" />
             </template>
 
@@ -31,7 +31,7 @@
             :loading="connecting"
             label="Пароль сети WiFi"
             counter="32"
-            placeholder=""
+            placeholder
         ></v-text-field>
         <v-layout justify-center class="my-2 py-0">
             <v-btn
@@ -40,18 +40,14 @@
                 :loading="scanning"
                 @click="scan()"
                 text
-            >
-                Обновить список сетей
-            </v-btn>
+            >Обновить список сетей</v-btn>
             <v-btn
                 v-else
                 :disabled="connecting"
                 :loading="connecting"
                 @click="connect()"
                 text
-            >
-                подключиться к сети
-            </v-btn>
+            >подключиться к сети</v-btn>
         </v-layout>
     </span>
 </template>
@@ -120,9 +116,7 @@ export default {
         configured: false,
         list: [
             { ssid: 'ESP1', rssi: 2 },
-            { ssid: 'Homenet', rssi: 3 },
-            { ssid: 'Skynet', rssi: 1 },
-            { ssid: 'KB', rssi: 3 }
+            { ssid: 'Homenet', rssi: 3 }
         ]
     })
 };

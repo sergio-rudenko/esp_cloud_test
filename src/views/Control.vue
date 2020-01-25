@@ -1,11 +1,6 @@
 <template>
     <div>
-        <v-card
-            v-for="(device, i) in output"
-            :key="i"
-            class="ma-2"
-            elevation="4"
-        >
+        <v-card v-for="(device, i) in output" :key="i" class="ma-2" elevation="4">
             <v-row no-gutters>
                 <v-col cols="2" class="d-flex align-center justify-center">
                     <svg-icon
@@ -38,12 +33,12 @@
                     <div v-else>
                         <v-card-title
                             class="text-truncate font-weight-regular px-2 py-2"
-                        >
-                            {{ device.title }}
-                        </v-card-title>
-                        <v-card-subtitle class="px-2 py-1">{{
+                        >{{ device.title }}</v-card-title>
+                        <v-card-subtitle class="px-2 py-1">
+                            {{
                             device.description
-                        }}</v-card-subtitle>
+                            }}
+                        </v-card-subtitle>
                     </div>
                 </v-col>
             </v-row>
@@ -56,9 +51,7 @@
                         @click="action = i"
                         color="primary"
                         class="mx-0"
-                    >
-                        отключить
-                    </v-btn>
+                    >отключить</v-btn>
 
                     <v-btn
                         v-if="isOwner"
@@ -66,11 +59,12 @@
                         @click="save = i"
                         color="warning"
                         class="mx-1"
-                    >
-                        сохранить
-                    </v-btn>
+                    >сохранить</v-btn>
                 </v-layout>
             </v-card-actions>
+        </v-card>
+        <v-card>
+            <v-btn @click="update()">{{shared.message}}</v-btn>
         </v-card>
     </div>
 </template>
@@ -78,14 +72,26 @@
 <style scoped></style>
 
 <script>
-import SvgIcon from '@/components/Svg/Icon.vue';
-
 export default {
-    components: {
-        SvgIcon
+    methods: {
+        update() {
+            // this.$root.$data.shared.setMessageAction('Hello.state');
+            window.console.log(
+                'before: ',
+                this.$root.$children[0].shared.state.message
+            );
+            this.$root.$children[0].shared.setMessageAction('Hello');
+            window.console.log(
+                'after: ',
+                this.$root.$children[0].shared.state.message
+            );
+        }
     },
-
     computed: {
+        shared() {
+            return this.$root.$children[0].shared.state;
+        },
+
         isOwner() {
             return false;
         }
