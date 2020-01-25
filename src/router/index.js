@@ -17,6 +17,14 @@ const routes = [
         component: Home
     },
 
+    /* setup */
+    {
+        path: '/setup/wifi',
+        name: 'setup_wifi',
+        component: () => import('../views/SetupWifi.vue')
+
+    },
+
     {
         path: '/initialization',
         name: 'initialization',
@@ -44,9 +52,7 @@ const routes = [
     {
         path: '/settings',
         name: 'settings',
-        component: () => import(
-            '../views/Settings.vue'
-        )
+        component: () => import('../views/Settings.vue')
     },
 
     {

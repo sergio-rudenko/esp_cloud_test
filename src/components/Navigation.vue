@@ -1,12 +1,8 @@
 <template>
     <span>
         <v-app-bar color="primary" dark app>
-            <v-btn icon :disabled="$route.path == '/login'" @click="drawer = !drawer">
-                <svg-icon
-                    size="40px"
-                    color="white"
-                    :name="$route.path == '/login' ? 'USER' : 'MENU'"
-                />
+            <v-btn icon :disabled="icon !== 'MENU'" @click="drawer = !drawer">
+                <svg-icon size="40px" color="white" :name="icon" />
             </v-btn>
             <v-toolbar-title>{{ title }}</v-toolbar-title>
         </v-app-bar>
@@ -27,7 +23,7 @@
                         </v-list-item-content>
                     </v-list-item>
                     <div class="pa-2">
-                        <v-btn block rounded text to="/login">{{ logoutTitle}}</v-btn>
+                        <v-btn block rounded text to="/login">{{ logoutTitle }}</v-btn>
                     </div>
                 </v-sheet>
             </template>
@@ -73,18 +69,27 @@
 // import { isUndefined } from 'util';
 
 export default {
+    mounted() {
+        window.console.log('store: ', this.$store);
+    },
+
     computed: {
-        shared() {
-            return this.$root.$children[0].shared.state;
+        title() {
+            return this.$store.state.application.title;
         },
 
-        user() {
-            return this.shared.credentials.user;
+        icon() {
+            return this.$store.state.application.icon;
         },
 
         menu() {
-            return this.shared.application.menu;
+            return this.$store.state.application.menu;
+        },
+
+        user() {
+            return this.$store.state.credentials.user;
         }
+
         // iconColor() {
         //     var c = this.$vuetify.theme.dark
         //         ? this.$vuetify.theme.themes.dark['secondary']
@@ -94,19 +99,18 @@ export default {
         // }
     },
 
-    props: {
-        title: {
-            type: String,
-            default: 'ESP::Cloud'
-        }
-    },
+    // props: {
+    //     title: {
+    //         type: String,
+    //         default: 'ESP::Cloud'
+    //     }
+    // },
 
     data() {
         return {
             drawer: false,
 
-            logoutTitle: 'Выход из системы',
-     
+            logoutTitle: 'Выход из системы'
         };
     }
 };
