@@ -107,12 +107,12 @@
 
 <script>
 // import SvgIcon from '@/components/Svg/Icon.vue';
-import WifiSetup from '@/components/WifiSetup.vue';
+// import WifiSetup from '@/components/WifiSetup.vue';
 
 export default {
     components: {
         // SvgIcon
-        WifiSetup
+        // WifiSetup
     },
 
     methods: {},

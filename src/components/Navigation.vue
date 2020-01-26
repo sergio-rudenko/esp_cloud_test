@@ -52,7 +52,7 @@
                 <v-list shaped dense flat>
                     <v-list-item dense rounded @click="$vuetify.theme.dark = !$vuetify.theme.dark">
                         <v-list-item-action>
-                            <svg-icon name="NIGHT" size="24px" />
+                            <svg-icon name="NIGHT" />
                         </v-list-item-action>
                         <v-list-item-title>Night mode</v-list-item-title>
                         <v-switch v-model="$vuetify.theme.dark" @click.prevent />
@@ -69,9 +69,7 @@
 // import { isUndefined } from 'util';
 
 export default {
-    mounted() {
-        window.console.log('store: ', this.$store);
-    },
+    mounted() {},
 
     computed: {
         title() {

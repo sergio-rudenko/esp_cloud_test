@@ -10,9 +10,37 @@ export default new Vuex.Store({
         count: 0,
 
         message: 'Привет!',
+
+        data: {
+            outputs: [
+                {
+                    title: 'Светодиод 1',
+                    description: 'Управление доступно всем',
+                    state: 'on'
+                },
+                {
+                    title: 'Светодиод 2',
+                    description:
+                        'Управление доступно на уровнях доступа "Владелец" и "Пользователь"',
+                    state: 'off'
+                },
+                {
+                    title: 'Светодиод 3',
+                    description:
+                        'Управление доступно на уровнях доступа "Владелец" и "Пользователь"',
+                    state: 'on'
+                },
+                {
+                    title: 'Светодиод 4',
+                    description: 'Управление доступно только владельцу',
+                    state: 'off'
+                }
+            ]
+        },
+
         application: {
-            title: 'ESP:Cloud',
-            icon: 'USER',
+            title: 'ESP::Cloud',
+            icon: 'MENU',
 
             menu: [
                 // { heading: 'menu' },
@@ -59,9 +87,16 @@ export default new Vuex.Store({
 
         credentials: {
             user: {
+                role: 'owner',
                 name: 'sergio',
                 mail: 'sergio.rudenko@gmail.com',
                 phone: '+79185387721'
+            },
+
+            wifi: {
+                ssid: undefined,
+                pass: undefined,
+                connected: false,
             }
         }
     },
@@ -74,6 +109,17 @@ export default new Vuex.Store({
         setMenuIcon(state, data) {
             window.console.log('setMenuIcon: ', data);
             state.application.icon = data;
+        },
+
+        setOutputUndefined(state, num) {
+            window.console.log('setOutputUndefined: ', num);
+            state.data.outputs[parseInt(num)].state = 'undefined'
+        },
+
+        setOutput(state, data) {
+            window.console.log('setOutput: ', data);
+            window.console.log('setOutput: ' + data.num + ' -> ' + data.value);
+            state.data.outputs[parseInt(data.num)].state = data.value
         }
 
         // setStartAs(state, data) {

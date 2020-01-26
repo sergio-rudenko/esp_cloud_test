@@ -1,70 +1,64 @@
 <template>
     <div>
-        <v-card v-for="(device, i) in output" :key="i" class="ma-2" elevation="4">
+        <v-card v-for="(output, i) in outputs" :key="i" class="ma-2" elevation="4">
             <v-row no-gutters>
                 <v-col cols="2" class="d-flex align-center justify-center">
                     <svg-icon
-                        :name="device.state === 'on' ? 'led-on' : 'led-off'"
-                        :color="device.state === 'on' ? 'red' : 'darkgray'"
+                        :name="output.state === 'on' ? 'led-on' : 'led-off'"
+                        :color="output.state === 'on' ? 'red' : 'darkgray'"
                         size="48px"
                     />
                 </v-col>
                 <v-col>
-                    <div v-if="isOwner">
+                    <!-- <div v-if="isOwner">
                         <v-text-field
                             required
-                            v-model="device.titleModified"
-                            placeholder="device.title"
-                            counter="32"
+                            v-model="model[i].title"
+                            :placeholder="output.title"
                             hint="Наименование устройства"
+                            counter="32"
                             class="mx-4"
                         ></v-text-field>
                         <v-textarea
                             rows="1"
                             required
                             auto-grow
-                            v-model="device.description"
+                            v-model="model[i].description"
+                            :placeholder="output.description"
                             hint="Дополнительная информация"
                             counter="128"
                             class="mx-4 mb-2"
                             style="font-size: 0.8rem;"
                         ></v-textarea>
-                    </div>
-                    <div v-else>
+                    </div>-->
+                    <div>
                         <v-card-title
                             class="text-truncate font-weight-regular px-2 py-2"
-                        >{{ device.title }}</v-card-title>
-                        <v-card-subtitle class="px-2 py-1">
-                            {{
-                            device.description
-                            }}
-                        </v-card-subtitle>
+                        >{{ output.title }}</v-card-title>
+                        <v-card-subtitle class="px-2 py-1">{{ output.description }}</v-card-subtitle>
                     </div>
                 </v-col>
             </v-row>
             <v-divider />
             <v-card-actions class="ma-auto">
-                <v-layout :justify-end="isOwner" :justify-center="!isOwner">
+                <v-layout justify-center>
                     <v-btn
-                        :loading="output[i].state === 'undefined'"
-                        :disabled="output[i].state === 'undefined'"
+                        :loading="output.state === 'undefined'"
+                        :disabled="output.state === 'undefined'"
                         @click="action = i"
                         color="primary"
                         class="mx-0"
-                    >отключить</v-btn>
+                    >{{output.state === 'on' ? 'отключить' : 'включить' }}</v-btn>
 
-                    <v-btn
+                    <!-- <v-btn
                         v-if="isOwner"
-                        :disabled="device.titleModified === device.title"
+                        :disabled="output.titleModified === output.title"
                         @click="save = i"
                         color="warning"
                         class="mx-1"
-                    >сохранить</v-btn>
+                    >сохранить</v-btn>-->
                 </v-layout>
             </v-card-actions>
-        </v-card>
-        <v-card>
-            <v-btn @click="update()">{{shared.message}}</v-btn>
         </v-card>
     </div>
 </template>
@@ -73,27 +67,15 @@
 
 <script>
 export default {
-    methods: {
-        update() {
-            // this.$root.$data.shared.setMessageAction('Hello.state');
-            window.console.log(
-                'before: ',
-                this.$root.$children[0].shared.state.message
-            );
-            this.$root.$children[0].shared.setMessageAction('Hello');
-            window.console.log(
-                'after: ',
-                this.$root.$children[0].shared.state.message
-            );
-        }
-    },
+    methods: {},
+
     computed: {
-        shared() {
-            return this.$root.$children[0].shared.state;
+        outputs() {
+            return this.$store.state.data.outputs;
         },
 
         isOwner() {
-            return false;
+            return this.$store.state.credentials.user.role === 'owner';
         }
     },
 
@@ -102,9 +84,17 @@ export default {
             const n = this.action;
 
             if (n !== null) {
-                this.output[n].state = 'undefined';
+                const state = this.outputs[n].state;
+                this.$store.commit('setOutputUndefined', n);
 
-                setTimeout(() => (this.output[n].state = 'on'), 3000);
+                setTimeout(
+                    () =>
+                        this.$store.commit('setOutput', {
+                            num: n,
+                            value: state === 'on' ? 'off' : 'on'
+                        }),
+                    3000
+                );
                 this.action = null;
             }
         }
@@ -112,41 +102,7 @@ export default {
 
     data() {
         return {
-            action: '',
-
-            output: [
-                {
-                    title: 'Светодиод 1',
-                    titleModified: 'Светодиод 1',
-                    description: 'Управление доступно всем',
-                    state: 'on'
-                },
-                {
-                    title: 'Светодиод 2',
-                    titleModified: 'Светодиод 2',
-
-                    description:
-                        'Управление доступно на уровнях доступа "Владелец" и "Пользователь"',
-                    state: 'off'
-                },
-                {
-                    title: 'Светодиод 3',
-                    titleModified: 'Светодиод 3',
-
-                    description:
-                        'Управление доступно на уровнях доступа "Владелец" и "Пользователь"',
-                    descriptionModified: '',
-
-                    state: 'on'
-                },
-                {
-                    title: 'Светодиод 4',
-                    titleModified: 'Светодиод 4',
-
-                    description: 'Управление доступно только владельцу',
-                    state: 'off'
-                }
-            ]
+            action: ''
         };
     }
 };
