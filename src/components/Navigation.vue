@@ -1,13 +1,21 @@
 <template>
     <span>
         <v-app-bar color="primary" dark app>
-            <v-btn icon :disabled="icon !== 'MENU'" @click="drawer = !drawer">
-                <svg-icon size="40px" color="white" :name="icon" />
+            <v-btn :disabled="icon !== 'MENU'" @click="drawer = !drawer" icon>
+                <svg-icon :name="icon" color="white" size="40px" />
             </v-btn>
             <v-toolbar-title>{{ title }}</v-toolbar-title>
+
+            <v-spacer />
+            <v-btn @click="reload()" color="primary" v-text="'R'" />
         </v-app-bar>
 
-        <v-navigation-drawer v-model="drawer" :dark="$vuetify.theme.dark" temporary app>
+        <v-navigation-drawer
+            v-model="drawer"
+            :dark="$vuetify.theme.dark"
+            temporary
+            app
+        >
             <!-- user credentials -->
             <template v-if="menu" v-slot:prepend>
                 <v-sheet color="primary" dark tile>
@@ -23,7 +31,9 @@
                         </v-list-item-content>
                     </v-list-item>
                     <div class="pa-2">
-                        <v-btn block rounded text to="/login">{{ logoutTitle }}</v-btn>
+                        <v-btn block rounded text to="/login">{{
+                            logoutTitle
+                        }}</v-btn>
                     </div>
                 </v-sheet>
             </template>
@@ -31,17 +41,27 @@
             <!-- application menu -->
             <v-list shaped dense flat>
                 <template v-for="(item, i) in menu">
-                    <v-subheader v-if="item.heading" :key="i">{{ item.heading }}</v-subheader>
+                    <v-subheader v-if="item.heading" :key="i">
+                        {{ item.heading }}
+                    </v-subheader>
 
                     <v-divider v-else-if="item.divider" :key="i" class="my-2" />
 
-                    <v-list-item v-else link :disabled="item.disabled" :to="item.path" :key="i">
+                    <v-list-item
+                        v-else
+                        :disabled="item.disabled"
+                        :to="item.path"
+                        :key="i"
+                        link
+                    >
                         <v-list-item-action>
                             <svg-icon :name="item.icon" />
                         </v-list-item-action>
 
                         <v-list-item-content>
-                            <v-list-item-title>{{ item.title }}</v-list-item-title>
+                            <v-list-item-title>
+                                {{ item.title }}
+                            </v-list-item-title>
                         </v-list-item-content>
                     </v-list-item>
                 </template>
@@ -50,12 +70,19 @@
             <!-- dark mode switch -->
             <template v-slot:append>
                 <v-list shaped dense flat>
-                    <v-list-item dense rounded @click="$vuetify.theme.dark = !$vuetify.theme.dark">
+                    <v-list-item
+                        @click="$vuetify.theme.dark = !$vuetify.theme.dark"
+                        rounded
+                        dense
+                    >
                         <v-list-item-action>
                             <svg-icon name="NIGHT" />
                         </v-list-item-action>
                         <v-list-item-title>Night mode</v-list-item-title>
-                        <v-switch v-model="$vuetify.theme.dark" @click.prevent />
+                        <v-switch
+                            v-model="$vuetify.theme.dark"
+                            @click.prevent
+                        />
                     </v-list-item>
                 </v-list>
             </template>
@@ -70,6 +97,14 @@
 
 export default {
     mounted() {},
+
+    methods: {
+        reload() {
+            // window.console.log('host: ', window.location.hostname);
+            // window.console.log('path: ', window.location.pathname);
+            window.location.reload();
+        }
+    },
 
     computed: {
         title() {
@@ -87,14 +122,6 @@ export default {
         user() {
             return this.$store.state.credentials.user;
         }
-
-        // iconColor() {
-        //     var c = this.$vuetify.theme.dark
-        //         ? this.$vuetify.theme.themes.dark['secondary']
-        //         : this.$vuetify.theme.themes.light['primary'];
-
-        //     return isUndefined(c) ? 'black' : c;
-        // }
     },
 
     // props: {
@@ -107,7 +134,6 @@ export default {
     data() {
         return {
             drawer: false,
-
             logoutTitle: 'Выход из системы'
         };
     }

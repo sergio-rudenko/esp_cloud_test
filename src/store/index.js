@@ -7,9 +7,27 @@ export default new Vuex.Store({
     strict: true,
 
     state: {
-        count: 0,
+        socket: {
+            isConnected: null,
+            reconnectError: null,
+            message: '',
+        },
+        event: '',
 
-        message: 'Привет!',
+        device: {
+            local: {
+                mode: 0,
+                auth: {
+                    configured: false,
+                },
+                wifi: {
+                    configured: false,
+                    mode: null,
+                    ssid: null
+                }
+            },
+            remote: [],
+        },
 
         data: {
             outputs: [
@@ -101,7 +119,94 @@ export default new Vuex.Store({
         }
     },
 
+    getters: {
+        isConnected: state => state.socket.isConnected,
+
+        message: state => state.socket.message,
+        event: state => state.event,
+    },
+
     mutations: {
+        /* websocket */
+        SOCKET_ONOPEN(state, event) {
+            //Vue.prototype.$socket = event.currentTarget
+            state.socket.isConnected = true;
+            window.console.log("ws open ", event);
+        },
+        SOCKET_ONCLOSE(state, event) {
+            if (state.socket.isConnected) {
+                window.console.log("ws closed ", event);
+
+                state.message = null;
+                state.event = null;
+
+                state.socket.isConnected = false;
+            }
+        },
+        SOCKET_ONERROR(state, event) {
+            window.console.log("ws error ", state, event)
+        },
+        // mutations for reconnect methods
+        SOCKET_RECONNECT(state, count) {
+            window.console.info("ws reconnect: ", state, count)
+        },
+        SOCKET_RECONNECT_ERROR(state) {
+            state.socket.reconnectError = true;
+        },
+        // default handler called for all methods
+        SOCKET_ONMESSAGE(state, message) {
+            try {
+                const msg = JSON.parse(message.data);
+                //window.console.log("::message proceed: ", msg);
+
+                if (msg.event) {
+                    /* store event */
+                    state.event = message.data;
+
+                    /* proceed events */
+                    if (msg.event.source === 'state') {
+                        /* local device state, received after connection */
+                        //window.console.log("::event state: ", msg.event);
+
+                        state.device.local.mode = msg.event.mode;
+                        state.device.local.auth.configured = msg.event.auth_configured;
+                        state.device.local.wifi.configured = msg.event.wifi_configured;
+
+                        if (msg.event.wifi_configured) {
+                            state.device.local.wifi.mode = msg.event.wifi_mode;
+                            state.device.local.wifi.sta.ssid = msg.event.wifi_ssid;
+                        }
+                        else {
+                            state.device.local.wifi.mode = 'SoftAP';
+                        }
+
+                        //TODO...
+                    }
+
+                    if (msg.event.source === 'wifi') {
+                        state.device.local.wifi.mode = msg.event.mode;
+
+                        if (msg.event.state) {
+                            state.device.local.wifi.sta.ssid = msg.event.ssid;
+                            state.device.local.wifi.sta.state = msg.event.state;
+
+                            if (msg.event.state === 'disconnected')
+                                state.device.local.wifi.sta.reason = msg.event.reason;
+                        }
+                        //TODO...
+                    }
+                }
+                else {
+                    state.socket.message = msg;
+                }
+            }
+            catch (error) {
+                state.socket.message = message;
+                window.console.log("::message proceed error: ", message);
+            }
+        },
+
+        /* other */
         increment(state) {
             state.count++;
         },
@@ -166,7 +271,12 @@ export default new Vuex.Store({
         // }
     },
 
-    actions: {},
+    actions: {
+        wsSendMessage: function (context, message) {
+            window.console.log("STORE ws tx: ", JSON.stringify(message));
+            Vue.prototype.$socket.send(JSON.stringify(message))
+        }
+    },
 
     modules: {}
 });

@@ -24,6 +24,12 @@ const routes = [
         component: () => import('../views/SetupWifi.vue')
 
     },
+    {
+        path: '/setup/user',
+        name: 'setup_user',
+        component: () => import('../views/SetupUser.vue')
+
+    },
 
     {
         path: '/initialization',
