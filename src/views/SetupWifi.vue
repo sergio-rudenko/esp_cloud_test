@@ -1,9 +1,7 @@
 <template>
     <v-layout align-center justify-center>
         <v-card class="ma-2" max-width="400px" flat tile>
-            <v-card-title
-                class="title font-weight-regular justify-space-between"
-            >
+            <v-card-title class="title font-weight-regular justify-space-between">
                 <span>{{ title }}</span>
             </v-card-title>
 
@@ -22,7 +20,7 @@
                     v-if="wifiNet !== null"
                     name="window-close"
                     color="primary"
-                    />-->
+                        />-->
                         <svg-icon
                             :name="
                                 network == null
@@ -35,13 +33,12 @@
 
                     <template v-slot:item="{ item }">
                         <v-layout justify-space-between>
-                            <span class="text-truncate" style="width: 80%;">{{
+                            <span class="text-truncate" style="width: 80%;">
+                                {{
                                 item.ssid
-                            }}</span>
-                            <svg-icon
-                                :name="'wifi-strength-' + item.rssi"
-                                color="gray"
-                            />
+                                }}
+                            </span>
+                            <svg-icon :name="'wifi-strength-' + item.rssi" color="gray" />
                         </v-layout>
                     </template>
                 </v-combobox>
@@ -63,40 +60,30 @@
                         :loading="scanning"
                         @click="scanNetworks()"
                         text
-                        >обновить список сетей</v-btn
-                    >
+                    >обновить список сетей</v-btn>
                     <v-btn
                         v-else
                         :disabled="connecting"
                         :loading="connecting"
                         @click="connectUplink()"
                         text
-                        >подключиться к сети</v-btn
-                    >
+                    >подключиться к сети</v-btn>
                 </v-layout>
             </v-card-text>
 
             <!-- Description -->
             <v-card-text>
-                <span class="caption grey--text text--darken-1 py-0">{{
+                <span class="caption grey--text text--darken-1 py-0">
+                    {{
                     description
-                }}</span>
+                    }}
+                </span>
             </v-card-text>
 
             <v-divider></v-divider>
-            <v-card
-                class="d-flex align-center justify-space-around"
-                height="64"
-                flat
-                tile
-            >
+            <v-card class="d-flex align-center justify-space-around" height="64" flat tile>
                 <!-- <v-btn :disabled="true" text>назад</v-btn> -->
-                <v-btn
-                    @click="disableUplink()"
-                    v-text="'отмена'"
-                    color="warning"
-                    block
-                />
+                <v-btn @click="disableUplink()" v-text="'отмена'" color="warning" block />
             </v-card>
         </v-card>
     </v-layout>
@@ -104,31 +91,9 @@
 
 <script>
 // const axios = require('axios').default;
-// import { mapState } from 'vuex';
-
+import { mapGetters } from 'vuex';
 export default {
     created() {
-        this.$store.watch(
-            (state, getters) => getters.message,
-            message => {
-                window.console.log('Setup Wifi get: ', message);
-
-                /* wifi ntwork scan result */
-                if (message.path == 'wifi' && message.param.action == 'scan') {
-                    clearTimeout(this.timeout);
-
-                    if (message.result.error || message.result.length == 0) {
-                        this.timeout = setTimeout(() => {
-                            this.scanNetworks();
-                        }, 2000);
-                    } else {
-                        this.networks = message.result;
-                        this.scanning = false;
-                    }
-                }
-            }
-        );
-
         this.$store.commit('setMenuIcon', 'wifi-strength-off');
         this.scanNetworks();
     },
@@ -197,15 +162,33 @@ export default {
     },
 
     watch: {
+        message: function(msg) {
+            if (msg !== null) {
+                window.console.log('SetupWifi msg: ', msg);
+
+                /* wifi ntwork scan result */
+                if (msg.path == 'wifi' && msg.param.action == 'scan') {
+                    clearTimeout(this.timeout);
+
+                    if (msg.result.error || msg.result.length == 0) {
+                        this.timeout = setTimeout(() => {
+                            this.scanNetworks();
+                        }, 2000);
+                    } else {
+                        this.networks = msg.result;
+                        this.scanning = false;
+                    }
+                }
+            }
+        },
+
         password: function() {
             this.auth_error = false;
         }
     },
 
     computed: {
-        // event: mapState(['event']),
-        // message: mapState(['message']),
-        // counter: mapState(['counter']),
+        ...mapGetters(['message']),
 
         sortedNetworks() {
             function compare(a, b) {

@@ -7,10 +7,12 @@ export default new Vuex.Store({
     strict: true,
 
     state: {
+        debug: true,
+
         socket: {
             isConnected: null,
             reconnectError: null,
-            message: '',
+            message: ''
         },
         event: '',
 
@@ -18,7 +20,7 @@ export default new Vuex.Store({
             local: {
                 mode: 0,
                 auth: {
-                    configured: false,
+                    configured: false
                 },
                 wifi: {
                     configured: false,
@@ -26,7 +28,7 @@ export default new Vuex.Store({
                     ssid: null
                 }
             },
-            remote: [],
+            remote: []
         },
 
         data: {
@@ -114,16 +116,18 @@ export default new Vuex.Store({
             wifi: {
                 ssid: undefined,
                 pass: undefined,
-                connected: false,
+                connected: false
             }
         }
     },
 
     getters: {
-        isConnected: state => state.socket.isConnected,
+        isWsConnected: state => {
+            return state.socket.isConnected;
+        },
 
         message: state => state.socket.message,
-        event: state => state.event,
+        event: state => state.event
     },
 
     mutations: {
@@ -131,11 +135,11 @@ export default new Vuex.Store({
         SOCKET_ONOPEN(state, event) {
             //Vue.prototype.$socket = event.currentTarget
             state.socket.isConnected = true;
-            window.console.log("ws open ", event);
+            window.console.log('ws open ', event);
         },
         SOCKET_ONCLOSE(state, event) {
             if (state.socket.isConnected) {
-                window.console.log("ws closed ", event);
+                window.console.log('ws closed ', event);
 
                 state.message = null;
                 state.event = null;
@@ -144,14 +148,17 @@ export default new Vuex.Store({
             }
         },
         SOCKET_ONERROR(state, event) {
-            window.console.log("ws error ", state, event)
+            window.console.log('ws error ', state, event);
         },
         // mutations for reconnect methods
         SOCKET_RECONNECT(state, count) {
-            window.console.info("ws reconnect: ", state, count)
+            //window.console.info("ws reconnect: ", state, count)
+            window.console.info('ws reconnect attempt: #', count);
+            state.socket.isConnected = false;
         },
         SOCKET_RECONNECT_ERROR(state) {
             state.socket.reconnectError = true;
+            window.console.info('ws reconnect error..');
         },
         // default handler called for all methods
         SOCKET_ONMESSAGE(state, message) {
@@ -169,14 +176,16 @@ export default new Vuex.Store({
                         //window.console.log("::event state: ", msg.event);
 
                         state.device.local.mode = msg.event.mode;
-                        state.device.local.auth.configured = msg.event.auth_configured;
-                        state.device.local.wifi.configured = msg.event.wifi_configured;
+                        state.device.local.auth.configured =
+                            msg.event.auth_configured;
+                        state.device.local.wifi.configured =
+                            msg.event.wifi_configured;
 
                         if (msg.event.wifi_configured) {
                             state.device.local.wifi.mode = msg.event.wifi_mode;
-                            state.device.local.wifi.sta.ssid = msg.event.wifi_ssid;
-                        }
-                        else {
+                            state.device.local.wifi.sta.ssid =
+                                msg.event.wifi_ssid;
+                        } else {
                             state.device.local.wifi.mode = 'SoftAP';
                         }
 
@@ -191,18 +200,17 @@ export default new Vuex.Store({
                             state.device.local.wifi.sta.state = msg.event.state;
 
                             if (msg.event.state === 'disconnected')
-                                state.device.local.wifi.sta.reason = msg.event.reason;
+                                state.device.local.wifi.sta.reason =
+                                    msg.event.reason;
                         }
                         //TODO...
                     }
-                }
-                else {
+                } else {
                     state.socket.message = msg;
                 }
-            }
-            catch (error) {
+            } catch (error) {
                 state.socket.message = message;
-                window.console.log("::message proceed error: ", message);
+                window.console.log('::message proceed error: ', message);
             }
         },
 
@@ -218,13 +226,13 @@ export default new Vuex.Store({
 
         setOutputUndefined(state, num) {
             window.console.log('setOutputUndefined: ', num);
-            state.data.outputs[parseInt(num)].state = 'undefined'
+            state.data.outputs[parseInt(num)].state = 'undefined';
         },
 
         setOutput(state, data) {
             window.console.log('setOutput: ', data);
             window.console.log('setOutput: ' + data.num + ' -> ' + data.value);
-            state.data.outputs[parseInt(data.num)].state = data.value
+            state.data.outputs[parseInt(data.num)].state = data.value;
         }
 
         // setStartAs(state, data) {
@@ -272,9 +280,11 @@ export default new Vuex.Store({
     },
 
     actions: {
-        wsSendMessage: function (context, message) {
-            window.console.log("STORE ws tx: ", JSON.stringify(message));
-            Vue.prototype.$socket.send(JSON.stringify(message))
+        wsSendMessage: function(context, message) {
+            const msg = JSON.stringify(message);
+            if (this.state.debug) window.console.log('wsSendMessage: ', msg);
+
+            Vue.prototype.$socket.send(msg);
         }
     },
 

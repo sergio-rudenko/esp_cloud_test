@@ -11,70 +11,73 @@
 </template>
 
 <script>
+import { mapState } from 'vuex';
+import { mapGetters } from 'vuex';
+
 import AppNavigation from './components/Navigation';
 
 export default {
     name: 'App',
-
     components: {
         AppNavigation
-    },
-
-    created() {
-        this.$store.watch(
-            (state, getters) => getters.isConnected,
-            value => {
-                if (value === false && this.$route)
-                    if (this.$route.path !== '/') {
-                        window.console.log('App::route: "/"');
-                        this.$router.push({ path: '/' });
-                    }
-            }
-        );
-
-        this.$store.watch(
-            (state, getters) => getters.event,
-            () => {
-                if (this.isConnected && this.$route) {
-                    var path = '';
-                    const localDevice = this.$store.state.device.local;
-
-                    if (
-                        localDevice.wifi.configured == false ||
-                        localDevice.wifi_config_unsaved == true
-                    ) {
-                        /* SETUP 1st step: connect to WiFi AP */
-                        path = '/setup/wifi';
-                    } else if (localDevice.auth.configured == false) {
-                        /* SETUP 2st step: login to cloud */
-                        path = '/setup/user';
-                    } else {
-                        /* Setup finished: */
-                        path = '/control';
-                    }
-
-                    if (path !== '' && path !== this.$route.path) {
-                        window.console.log('App::route: ', path);
-                        this.$router.push({ path: path });
-                    }
-                }
-            }
-        );
     },
 
     beforeMount() {
         this.$vuetify.theme.dark = localStorage.getItem('darkMode') == 'true';
 
         /* start websocket TODO: conditions... */
-        if (!this.isConnected) this.$connect();
+        // if (!this.isWsConnected)
+        this.$connect();
     },
 
-    methods: {},
+    methods: {
+        switchRoute() {
+            var path = '';
+
+            if (this.$route.path === '/' && this.isWsConnected === true) {
+                switch (this.localDevice.mode) {
+                    case 1 /* REGULAR */:
+                    case 2 /* LOCAL */:
+                        path = '/control';
+                        break;
+
+                    case 3 /* SETUP WiFi */:
+                        path = '/setup/wifi';
+                        break;
+
+                    case 4 /* SETUP Auth */:
+                        path = '/setup/auth';
+                        break;
+
+                    default:
+                        path = '/';
+                }
+            }
+            if (this.$route.path !== '/' && this.isWsConnected !== true) {
+                path = '/';
+            }
+            if (path !== '' && path !== this.$route.path) {
+                window.console.log('App route: ', path);
+                this.$router.push({ path: path });
+            }
+        }
+    },
+
+    watch: {
+        isWsConnected: function() {
+            this.switchRoute();
+        },
+
+        event: function() {
+            this.switchRoute();
+        }
+    },
 
     computed: {
-        isConnected() {
-            return this.$store.state.socket.isConnected;
-        }
+        ...mapGetters(['isWsConnected', 'event']),
+        ...mapState({
+            localDevice: state => state.device.local
+        })
     },
 
     data() {
