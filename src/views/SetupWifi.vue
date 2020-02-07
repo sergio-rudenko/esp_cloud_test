@@ -1,7 +1,9 @@
 <template>
     <v-layout align-center justify-center>
         <v-card class="ma-2" max-width="400px" flat tile>
-            <v-card-title class="title font-weight-regular justify-space-between">
+            <v-card-title
+                class="title font-weight-regular justify-space-between"
+            >
                 <span>{{ title }}</span>
             </v-card-title>
 
@@ -11,7 +13,7 @@
                     :loading="scanning"
                     :items="sortedNetworks"
                     item-text="ssid"
-                    label="WiFi сеть"
+                    :label="'WiFi сеть [' + this.sortedNetworks.length + ']'"
                     counter="32"
                     clearable
                 >
@@ -34,11 +36,12 @@
                     <template v-slot:item="{ item }">
                         <v-layout justify-space-between>
                             <span class="text-truncate" style="width: 80%;">
-                                {{
-                                item.ssid
-                                }}
+                                {{ item.ssid }}
                             </span>
-                            <svg-icon :name="'wifi-strength-' + item.rssi" color="gray" />
+                            <svg-icon
+                                :name="'wifi-strength-' + item.rssi"
+                                color="gray"
+                            />
                         </v-layout>
                     </template>
                 </v-combobox>
@@ -46,7 +49,7 @@
                 <v-text-field
                     v-model="password"
                     :loading="connecting"
-                    :error="auth_error"
+                    :error="password_wrong"
                     type="password"
                     label="Пароль сети WiFi"
                     counter="64"
@@ -60,30 +63,40 @@
                         :loading="scanning"
                         @click="scanNetworks()"
                         text
-                    >обновить список сетей</v-btn>
+                        >обновить список сетей</v-btn
+                    >
                     <v-btn
                         v-else
                         :disabled="connecting"
                         :loading="connecting"
-                        @click="connectUplink()"
+                        @click="connectWiFi()"
                         text
-                    >подключиться к сети</v-btn>
+                        >подключиться к сети</v-btn
+                    >
                 </v-layout>
             </v-card-text>
 
             <!-- Description -->
             <v-card-text>
                 <span class="caption grey--text text--darken-1 py-0">
-                    {{
-                    description
-                    }}
+                    {{ description }}
                 </span>
             </v-card-text>
 
             <v-divider></v-divider>
-            <v-card class="d-flex align-center justify-space-around" height="64" flat tile>
+            <v-card
+                class="d-flex align-center justify-space-around"
+                height="64"
+                flat
+                tile
+            >
                 <!-- <v-btn :disabled="true" text>назад</v-btn> -->
-                <v-btn @click="disableUplink()" v-text="'отмена'" color="warning" block />
+                <v-btn
+                    @click="disableUplink()"
+                    v-text="'отмена'"
+                    color="warning"
+                    block
+                />
             </v-card>
         </v-card>
     </v-layout>
@@ -96,6 +109,20 @@ export default {
     created() {
         this.$store.commit('setMenuIcon', 'wifi-strength-off');
         this.scanNetworks();
+
+        this.password_wrong = this.wifiStatus === /*WL_CONNECT_FAILED*/ 4;
+
+        if (this.wifiSSID === null) {
+            this.network = null;
+        } else {
+            this.network = {
+                ssid: this.wifiSSID
+            };
+        }
+    },
+
+    beforeDestroy() {
+        clearTimeout(this.timeout);
     },
 
     methods: {
@@ -105,36 +132,71 @@ export default {
         },
 
         scanNetworks() {
-            this.scanning = true;
-            this.sendMessage({
-                ep: '/api/module',
-                path: 'wifi',
-                param: {
-                    action: 'scan'
-                },
-                token: '__factory__'
-            });
+            if (this.scanning == false) {
+                this.scanning = true;
+                this.$store.commit('flushWifiNetworkList');
+            }
 
-            this.timeout = setTimeout(() => {
-                //window.location.reload();
-                this.scan();
-            }, 7000);
+            if (this.sortedNetworks.length == 0) {
+                this.sendMessage({
+                    ep: '/api/module',
+                    path: 'wifi',
+                    param: {
+                        action: 'scan'
+                    },
+                    token: '__factory__'
+                });
+
+                clearTimeout(this.timeout);
+                this.timeout = setTimeout(() => {
+                    this.scanNetworks();
+                }, 2000);
+            } else {
+                this.scanning = false;
+            }
         },
 
-        connectUplink() {
+        connectWiFi() {
+            this.$store.commit('flushWifiConnectState');
             this.sendMessage({
                 ep: '/api/module',
                 path: 'wifi',
                 param: {
-                    action: 'join',
+                    action: 'connect',
                     ssid: this.network.ssid,
                     pass: this.password
                 },
                 token: '__factory__'
             });
+
+            clearTimeout(this.timeout);
+            this.timeout = setTimeout(() => {
+                this.connecting = true;
+                this.getDeviceState();
+            }, 2000);
         },
 
-        disableUplink() {
+        getDeviceState() {
+            if (
+                this.localDeviceWifi.state !== 'connected' &&
+                this.localDeviceWifi.state !== 'disconnected'
+            ) {
+                this.sendMessage({
+                    ep: '/api/device',
+                    path: 'state',
+                    token: '__factory__'
+                });
+                clearTimeout(this.timeout);
+                this.timeout = setTimeout(() => {
+                    this.getDeviceState();
+                }, 1000);
+            } else {
+                this.connecting = false;
+            }
+        },
+
+        disableWiFi() {
+            this.connecting = true;
             this.sendMessage({
                 ep: '/api/module',
                 path: 'wifi',
@@ -143,52 +205,37 @@ export default {
                 },
                 token: '__factory__'
             });
-        },
-
-        onConnected() {
-            window.console.log('connected!');
-            clearTimeout(this.timeout);
-            this.connecting = false;
-            this.configured = true;
-            //this.$router.go(-1);
-        },
-
-        onDisconnected() {
-            window.console.log('failed to connect..');
-            clearTimeout(this.timeout);
-            this.connecting = false;
-            this.auth_error = true;
         }
+
+        // onConnected() {
+        //     window.console.log('connected!');
+        //     clearTimeout(this.timeout);
+        //     this.connecting = false;
+        //     this.configured = true;
+        //     //this.$router.go(-1);
+        // },
+
+        // onDisconnected() {
+        //     window.console.log('failed to connect..');
+        //     clearTimeout(this.timeout);
+        //     this.connecting = false;
+        //     this.auth_error = true;
+        // }
     },
 
     watch: {
-        message: function(msg) {
-            if (msg !== null) {
-                window.console.log('SetupWifi msg: ', msg);
-
-                /* wifi ntwork scan result */
-                if (msg.path == 'wifi' && msg.param.action == 'scan') {
-                    clearTimeout(this.timeout);
-
-                    if (msg.result.error || msg.result.length == 0) {
-                        this.timeout = setTimeout(() => {
-                            this.scanNetworks();
-                        }, 2000);
-                    } else {
-                        this.networks = msg.result;
-                        this.scanning = false;
-                    }
-                }
-            }
+        localDeviceWifi: function(value) {
+            window.console.log('STA state: ', value);
+            this.network.ssid = value.ssid;
         },
 
         password: function() {
-            this.auth_error = false;
+            this.password_wrong = false;
         }
     },
 
     computed: {
-        ...mapGetters(['message']),
+        ...mapGetters(['message', 'wifiNetworkList', 'wifiStatus', 'wifiSSID']),
 
         sortedNetworks() {
             function compare(a, b) {
@@ -197,7 +244,7 @@ export default {
                 if (a < b) return -1;
             }
 
-            return this.networks
+            return this.wifiNetworkList
                 .map(item => {
                     var rssi_level = 0;
                     if (item.rssi < -50 /*dBm*/)
@@ -215,10 +262,6 @@ export default {
                     return compare(b.rssi, a.rssi);
                 });
         }
-
-        // wsMessage() {
-        //     return this.$store.state.socket.message;
-        // }
     },
 
     data: () => ({
@@ -229,14 +272,12 @@ export default {
             'Для соединения с облаком необходимо подключение устройства \
             к сети Internet. Выполните настройку подключения к роутеру.',
 
-        networks: [],
         network: null,
         password: '',
+
         scanning: false,
         connecting: false,
-        configured: false,
-
-        auth_error: false
+        password_wrong: false
     })
 };
 </script>

@@ -27,7 +27,7 @@ export default {
 
         /* start websocket TODO: conditions... */
         // if (!this.isWsConnected)
-        this.$connect();
+        // this.$connect();
     },
 
     methods: {
@@ -36,17 +36,21 @@ export default {
 
             if (this.$route.path === '/' && this.isWsConnected === true) {
                 switch (this.localDevice.mode) {
-                    case 1 /* REGULAR */:
-                    case 2 /* LOCAL */:
-                        path = '/control';
-                        break;
-
-                    case 3 /* SETUP WiFi */:
+                    case 0 /* Factory */:
+                    case 2 /* SetupWiFi */:
                         path = '/setup/wifi';
                         break;
 
-                    case 4 /* SETUP Auth */:
-                        path = '/setup/auth';
+                    case 1 /* Flashing */:
+                        path = '/flashing';
+                        break;
+
+                    case 3 /* SetupAuth */:
+                        path = '/setup/user';
+                        break;
+
+                    case 4 /* SetupOther */:
+                        path = '/setup/other';
                         break;
 
                     default:

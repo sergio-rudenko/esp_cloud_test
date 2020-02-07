@@ -19,13 +19,10 @@ export default new Vuex.Store({
         device: {
             local: {
                 mode: 0,
-                auth: {
-                    configured: false
-                },
                 wifi: {
-                    configured: false,
-                    mode: null,
-                    ssid: null
+                    status: null,
+                    ssid: null,
+                    list: []
                 }
             },
             remote: []
@@ -126,6 +123,18 @@ export default new Vuex.Store({
             return state.socket.isConnected;
         },
 
+        wifiNetworkList: state => {
+            return state.device.local.wifi.list;
+        },
+
+        wifiStatus: state => {
+            return state.device.local.wifi.status;
+        },
+
+        wifiSSID: state => {
+            return state.device.local.wifi.ssid;
+        },
+
         message: state => state.socket.message,
         event: state => state.event
     },
@@ -173,45 +182,48 @@ export default new Vuex.Store({
                     /* proceed events */
                     if (msg.event.source === 'state') {
                         /* local device state, received after connection */
-                        //window.console.log("::event state: ", msg.event);
+                        window.console.log("EV::InitialState: ", msg.event);
 
                         state.device.local.mode = msg.event.mode;
-                        state.device.local.auth.configured =
-                            msg.event.auth_configured;
-                        state.device.local.wifi.configured =
-                            msg.event.wifi_configured;
-
-                        if (msg.event.wifi_configured) {
-                            state.device.local.wifi.mode = msg.event.wifi_mode;
-                            state.device.local.wifi.sta.ssid =
-                                msg.event.wifi_ssid;
-                        } else {
-                            state.device.local.wifi.mode = 'SoftAP';
-                        }
+                        state.device.local.wifi.status = msg.event.wifi.sta.status;
+                        state.device.local.wifi.ssid = msg.event.wifi.sta.ssid;
 
                         //TODO...
                     }
 
                     if (msg.event.source === 'wifi') {
-                        state.device.local.wifi.mode = msg.event.mode;
-
+                        window.console.log("EV::WiFi: ", msg.event);
                         if (msg.event.state) {
-                            state.device.local.wifi.sta.ssid = msg.event.ssid;
-                            state.device.local.wifi.sta.state = msg.event.state;
+                            state.device.local.wifi.state = msg.event.state;
+                            state.device.local.wifi.ssid = msg.event.ssid;
+                            state.device.local.wifi.pass = msg.event.pass;
 
                             if (msg.event.state === 'disconnected')
-                                state.device.local.wifi.sta.reason =
-                                    msg.event.reason;
+                                state.device.local.wifi.error = msg.event.error;
+
+                            if (msg.event.state === 'connected')
+                                state.device.local.wifi.error = 0;
                         }
                         //TODO...
                     }
                 } else {
                     state.socket.message = msg;
+
+                    /* wifi ntwork scan result */
+                    if (msg.path == 'wifi' && msg.param.action == 'scan' &&
+                        msg.result.length > 0) {
+                        // window.console.log('WIFI scan: ', msg);
+                        state.device.local.wifi.list = msg.result;
+                    }
                 }
             } catch (error) {
                 state.socket.message = message;
                 window.console.log('::message proceed error: ', message);
             }
+        },
+
+        flushWifiNetworkList(state) {
+            state.device.local.wifi.list = [];
         },
 
         /* other */
@@ -280,7 +292,7 @@ export default new Vuex.Store({
     },
 
     actions: {
-        wsSendMessage: function(context, message) {
+        wsSendMessage: function (context, message) {
             const msg = JSON.stringify(message);
             if (this.state.debug) window.console.log('wsSendMessage: ', msg);
 
