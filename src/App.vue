@@ -28,6 +28,8 @@ export default {
         /* start websocket TODO: conditions... */
         // if (!this.isWsConnected)
         // this.$connect();
+
+        this.$router.push({ path: '/setup/user' });
     },
 
     methods: {
@@ -69,11 +71,11 @@ export default {
 
     watch: {
         isWsConnected: function() {
-            this.switchRoute();
+            //this.switchRoute();
         },
 
         event: function() {
-            this.switchRoute();
+            //this.switchRoute();
         }
     },
 

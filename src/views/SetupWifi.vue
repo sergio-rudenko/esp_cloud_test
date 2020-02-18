@@ -91,12 +91,9 @@
                 tile
             >
                 <!-- <v-btn :disabled="true" text>назад</v-btn> -->
-                <v-btn
-                    @click="disableUplink()"
-                    v-text="'отмена'"
-                    color="warning"
-                    block
-                />
+                <v-btn @click="disableUplink()" color="warning" block text>
+                    Локальный режим
+                </v-btn>
             </v-card>
         </v-card>
     </v-layout>
@@ -169,34 +166,15 @@ export default {
                 token: '__factory__'
             });
 
-            clearTimeout(this.timeout);
-            this.timeout = setTimeout(() => {
-                this.connecting = true;
-                this.getDeviceState();
-            }, 2000);
-        },
-
-        getDeviceState() {
-            if (
-                this.localDeviceWifi.state !== 'connected' &&
-                this.localDeviceWifi.state !== 'disconnected'
-            ) {
-                this.sendMessage({
-                    ep: '/api/device',
-                    path: 'state',
-                    token: '__factory__'
-                });
-                clearTimeout(this.timeout);
-                this.timeout = setTimeout(() => {
-                    this.getDeviceState();
-                }, 1000);
-            } else {
-                this.connecting = false;
-            }
-        },
-
-        disableWiFi() {
             this.connecting = true;
+            clearTimeout(this.timeout);
+
+            this.timeout = setTimeout(() => {
+                window.location.reload();
+            }, 15000);
+        },
+
+        disableUplink() {
             this.sendMessage({
                 ep: '/api/module',
                 path: 'wifi',
@@ -205,6 +183,13 @@ export default {
                 },
                 token: '__factory__'
             });
+
+            this.connecting = true;
+            clearTimeout(this.timeout);
+
+            this.timeout = setTimeout(() => {
+                window.location.reload();
+            }, 15000);
         }
 
         // onConnected() {
@@ -267,7 +252,7 @@ export default {
     data: () => ({
         timeout: null,
 
-        title: 'Подключение к сети',
+        title: 'Подключение к сети WiFi',
         description:
             'Для соединения с облаком необходимо подключение устройства \
             к сети Internet. Выполните настройку подключения к роутеру.',

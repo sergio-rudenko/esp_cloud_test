@@ -162,8 +162,13 @@ export default new Vuex.Store({
         // mutations for reconnect methods
         SOCKET_RECONNECT(state, count) {
             //window.console.info("ws reconnect: ", state, count)
-            window.console.info('ws reconnect attempt: #', count);
-            state.socket.isConnected = false;
+            if (count < 5) {
+                window.console.info('ws reconnect attempt: #', count);
+                state.socket.isConnected = false;
+            }
+            else {
+                window.location.reload();
+            }
         },
         SOCKET_RECONNECT_ERROR(state) {
             state.socket.reconnectError = true;
