@@ -32,7 +32,7 @@
                                 label="Телефон"
                                 counter="16"
                                 prefix="+"
-                                placeholder="7 XXX XXX-XXXX"
+                                placeholder="X (XXX) XXX-XXXX"
                                 value=""
                                 class="mb-2"
                             ></v-text-field>

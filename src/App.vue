@@ -29,7 +29,7 @@ export default {
         // if (!this.isWsConnected)
         // this.$connect();
 
-        this.$router.push({ path: '/setup/user' });
+        this.$router.push({ path: '/setup/code' });
     },
 
     methods: {

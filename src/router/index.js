@@ -30,6 +30,12 @@ const routes = [
         component: () => import('../views/SetupUser.vue')
 
     },
+    {
+        path: '/setup/code',
+        name: 'setup_code',
+        component: () => import('../views/CodeConfirm.vue')
+
+    },
 
     {
         path: '/initialization',
