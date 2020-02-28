@@ -2,7 +2,11 @@
     <v-container>
         <v-layout text-center wrap class="ma-2">
             <v-flex xs12>
-                <v-img :src="require('../assets/logo.svg')" height="256" contain></v-img>
+                <v-img
+                    :src="require('../assets/logo.svg')"
+                    height="256"
+                    contain
+                ></v-img>
             </v-flex>
         </v-layout>
         <v-layout text-center wrap class="ma-8">
@@ -11,7 +15,10 @@
                     :indeterminate="isWsConnected !== true"
                     color="primary"
                     size="128"
-                >{{ isWsConnected !== true ? 'connect...' : 'connected' }}</v-progress-circular>
+                    >{{
+                        isWsConnected !== true ? 'connect...' : 'connected'
+                    }}</v-progress-circular
+                >
             </v-flex>
         </v-layout>
         <v-layout text-center wrap class="ma-8">
@@ -28,17 +35,15 @@ export default {
     components: {},
 
     beforeMount() {
-        this.$store.commit('setMenuIcon', 'wifi-strength-off');  
+        //this.$store.commit('setMenuIcon', 'wifi-strength-off');
     },
-   
+
     computed: {
         isWsConnected() {
             return this.$store.getters.isWsConnected;
         }
     },
 
-    data: () => ({
-
-    })
+    data: () => ({})
 };
 </script>

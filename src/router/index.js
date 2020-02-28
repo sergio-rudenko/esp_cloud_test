@@ -1,5 +1,6 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
+import Connect from '../views/Connect.vue';
 import Home from '../views/Home.vue';
 
 import Control from '../views/Control.vue';
@@ -17,6 +18,11 @@ const routes = [
         component: Home
     },
 
+    {
+        path: '/connect',
+        name: 'connect',
+        component: Connect
+    },
     /* setup */
     {
         path: '/setup/wifi',
@@ -34,6 +40,12 @@ const routes = [
         path: '/setup/code',
         name: 'setup_code',
         component: () => import('../views/CodeConfirm.vue')
+
+    },
+    {
+        path: '/setup/tokens',
+        name: 'setup_tokens',
+        component: () => import('../views/SetTokens.vue')
 
     },
 

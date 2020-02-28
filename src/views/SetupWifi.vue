@@ -12,8 +12,8 @@
                     v-model="network"
                     :loading="scanning"
                     :items="sortedNetworks"
-                    item-text="ssid"
                     :label="'WiFi сеть [' + this.sortedNetworks.length + ']'"
+                    item-text="ssid"
                     counter="32"
                     clearable
                 >
@@ -131,7 +131,7 @@ export default {
         scanNetworks() {
             if (this.scanning == false) {
                 this.scanning = true;
-                this.$store.commit('flushWifiNetworkList');
+                this.list = [];
             }
 
             if (this.sortedNetworks.length == 0) {
@@ -191,21 +191,6 @@ export default {
                 window.location.reload();
             }, 15000);
         }
-
-        // onConnected() {
-        //     window.console.log('connected!');
-        //     clearTimeout(this.timeout);
-        //     this.connecting = false;
-        //     this.configured = true;
-        //     //this.$router.go(-1);
-        // },
-
-        // onDisconnected() {
-        //     window.console.log('failed to connect..');
-        //     clearTimeout(this.timeout);
-        //     this.connecting = false;
-        //     this.auth_error = true;
-        // }
     },
 
     watch: {
@@ -216,11 +201,23 @@ export default {
 
         password: function() {
             this.password_wrong = false;
+        },
+
+        message: function(msg) {
+            /* wifi ntwork scan result */
+            if (msg.path == 'wifi' && msg.param.action == 'scan') {
+                // window.console.log('WIFI scan: ', msg);
+                if (msg.result.length > 0) {
+                    this.list = msg.result;
+                } else {
+                    this.list = [];
+                }
+            }
         }
     },
 
     computed: {
-        ...mapGetters(['message', 'wifiNetworkList', 'wifiStatus', 'wifiSSID']),
+        ...mapGetters(['message']),
 
         sortedNetworks() {
             function compare(a, b) {
@@ -229,7 +226,7 @@ export default {
                 if (a < b) return -1;
             }
 
-            return this.wifiNetworkList
+            return this.list
                 .map(item => {
                     var rssi_level = 0;
                     if (item.rssi < -50 /*dBm*/)
@@ -257,12 +254,14 @@ export default {
             'Для соединения с облаком необходимо подключение устройства \
             к сети Internet. Выполните настройку подключения к роутеру.',
 
-        network: null,
+        network: { ssid: '', rssi: 0 },
         password: '',
 
         scanning: false,
         connecting: false,
-        password_wrong: false
+        password_wrong: false,
+
+        list: []
     })
 };
 </script>

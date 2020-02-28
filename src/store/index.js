@@ -1,5 +1,6 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
+import { isUndefined } from 'util';
 
 Vue.use(Vuex);
 
@@ -7,26 +8,25 @@ export default new Vuex.Store({
     strict: true,
 
     state: {
+        version: '0.2',
+        startAs: "",
         debug: true,
+
 
         socket: {
             isConnected: null,
             reconnectError: null,
             message: ''
         },
-        event: '',
 
-        device: {
-            local: {
-                mode: 0,
-                wifi: {
-                    status: null,
-                    ssid: null,
-                    list: []
-                }
-            },
-            remote: []
+        mqtt: {
+            isConnected: null,
+            reconnectError: null,
+            instance: null,
+            message: ''
         },
+
+        event: '',
 
         data: {
             outputs: [
@@ -107,13 +107,24 @@ export default new Vuex.Store({
                 role: 'owner',
                 name: 'sergio',
                 mail: 'sergio.rudenko@gmail.com',
-                phone: '+79185387721'
+                phone: '+79185387721',
+                registered: true,
             },
+            mqtt: {
+                port: 3883,
+                host: 'sa100cloud.com',
+                clientId: '0c79113e83070d39',
+                user: 'b1c2b492c04c829a',
+                pass: 'd042675215ce302b'
+            },
+            token: null
+        },
 
+        local: {
             wifi: {
-                ssid: undefined,
-                pass: undefined,
-                connected: false
+                ssid: '',
+                pass: '',
+                state: 0
             }
         }
     },
@@ -123,23 +134,23 @@ export default new Vuex.Store({
             return state.socket.isConnected;
         },
 
-        wifiNetworkList: state => {
-            return state.device.local.wifi.list;
-        },
-
-        wifiStatus: state => {
-            return state.device.local.wifi.status;
-        },
-
-        wifiSSID: state => {
-            return state.device.local.wifi.ssid;
-        },
-
         message: state => state.socket.message,
-        event: state => state.event
+        event: state => state.event,
+
+        //user: state => state.credentials.user,
+        //token: state => state.credentials.token,
+
+        local: state => state.local,
+        credentials: state => state.credentials
     },
 
     mutations: {
+        setStartAs(state, data) {
+            window.console.log('setStartAs:', data);
+            state.startAs = data;
+        },
+
+
         /* websocket */
         SOCKET_ONOPEN(state, event) {
             //Vue.prototype.$socket = event.currentTarget
@@ -162,7 +173,7 @@ export default new Vuex.Store({
         // mutations for reconnect methods
         SOCKET_RECONNECT(state, count) {
             //window.console.info("ws reconnect: ", state, count)
-            if (count < 5) {
+            if (count < 10) {
                 window.console.info('ws reconnect attempt: #', count);
                 state.socket.isConnected = false;
             }
@@ -196,30 +207,23 @@ export default new Vuex.Store({
                         //TODO...
                     }
 
-                    if (msg.event.source === 'wifi') {
-                        window.console.log("EV::WiFi: ", msg.event);
-                        if (msg.event.state) {
-                            state.device.local.wifi.state = msg.event.state;
-                            state.device.local.wifi.ssid = msg.event.ssid;
-                            state.device.local.wifi.pass = msg.event.pass;
+                    // if (msg.event.source === 'wifi') {
+                    //     window.console.log("EV::WiFi: ", msg.event);
+                    //     if (msg.event.state) {
+                    //         state.device.local.wifi.state = msg.event.state;
+                    //         state.device.local.wifi.ssid = msg.event.ssid;
+                    //         state.device.local.wifi.pass = msg.event.pass;
 
-                            if (msg.event.state === 'disconnected')
-                                state.device.local.wifi.error = msg.event.error;
+                    //         if (msg.event.state === 'disconnected')
+                    //             state.device.local.wifi.error = msg.event.error;
 
-                            if (msg.event.state === 'connected')
-                                state.device.local.wifi.error = 0;
-                        }
-                        //TODO...
-                    }
+                    //         if (msg.event.state === 'connected')
+                    //             state.device.wifi.error = 0;
+                    //     }
+                    //     //TODO...
+                    // }
                 } else {
                     state.socket.message = msg;
-
-                    /* wifi ntwork scan result */
-                    if (msg.path == 'wifi' && msg.param.action == 'scan' &&
-                        msg.result.length > 0) {
-                        // window.console.log('WIFI scan: ', msg);
-                        state.device.local.wifi.list = msg.result;
-                    }
                 }
             } catch (error) {
                 state.socket.message = message;
@@ -228,7 +232,7 @@ export default new Vuex.Store({
         },
 
         flushWifiNetworkList(state) {
-            state.device.local.wifi.list = [];
+            state.device.wifi.list = [];
         },
 
         /* other */
@@ -250,17 +254,62 @@ export default new Vuex.Store({
             window.console.log('setOutput: ', data);
             window.console.log('setOutput: ' + data.num + ' -> ' + data.value);
             state.data.outputs[parseInt(data.num)].state = data.value;
+        },
+
+        setUserCredentials(state, data) {
+            window.console.log('setUserCredentials: ', data);
+            // user: {
+            //     role: 'owner',
+            //     name: 'sergio',
+            //     mail: 'sergio.rudenko@gmail.com',
+            //     phone: '+79185387721'
+            // },
+
+            state.credentials.user.name = data.name;
+            state.credentials.user.mail = data.mail;
+            state.credentials.user.phone = data.phone;
+        },
+
+        setCloudToken(state, data) {
+            if (state.debug) {
+                window.console.log('setCloudToken: ', data);
+
+                if (data.length)
+                    state.title = state.title + "*";
+            }
+            if (data.length) {
+                state.credentials.token = data;
+                localStorage.setItem('CT', data);
+            }
+        },
+
+        setMqttInstance(state, data) {
+            window.console.log('mqttinstance:', data);
+            state.mqtt.instance = data;
+        },
+
+        setMqttStatus(state, data) {
+            window.console.log('mqttStatus:', data === true ? 'connected' : 'disconnected');
+            state.mqtt.isConnected = (data === true);
+        },
+
+        setMqttNessage(state, data) {
+            state.mqtt.message = data;
+            if (state.debug) window.console.log(
+                "topic:'" +
+                state.mqtt.message.destinationName +
+                "', payload: '" +
+                state.mqtt.message.payloadString +
+                "'"
+            );
         }
+
 
         // setStartAs(state, data) {
         //     window.console.log('setStartAs:', data);
         //     state.startAs = data;
         // },
 
-        // setCloudStatus(state, data) {
-        //     window.console.log('cloudStatus:', data);
-        //     state.cloudStatus = data;
-        // },
 
         // this.$store.commit('updateDeviceText', {
         //     deviceUid: this.hostUid,
@@ -302,6 +351,94 @@ export default new Vuex.Store({
             if (this.state.debug) window.console.log('wsSendMessage: ', msg);
 
             Vue.prototype.$socket.send(msg);
+        },
+
+        mqttConnect: function (context) {
+            const mqtt = context.state.credentials.mqtt;
+            if (!isUndefined(window.Paho.MQTT.Client) && mqtt.clientId !== null
+                && mqtt.host !== null && mqtt.port !== null
+                && mqtt.user !== null && mqtt.pass !== null) {
+
+                window.console.log("MQTT: connecting to '" + mqtt.host + "' as " + mqtt.user);
+                var connectOptions = {
+                    timeout: 30,
+                    useSSL: true,
+                    userName: mqtt.user,
+                    password: mqtt.pass,
+                    cleanSession: false,
+                    keepAliveInterval: 60,
+
+                    onSuccess: () => {
+                        this.commit('setMqttStatus', true);
+                    },
+                    onFailure: () => {
+                        this.commit('setMqttStatus', false);
+                    },
+                };
+
+                this.commit('setMqttInstance', new window.Paho.MQTT.Client(
+                    mqtt.host, mqtt.port, "/mqtt", mqtt.clientId
+                ));
+
+                context.state.mqtt.instance.connect(connectOptions);
+
+                context.state.mqtt.instance.onMessageArrived = (msg) => {
+                    //window.console.log("onMessageArrived", msg);
+                    this.commit('setMqttNessage', msg);
+                };
+
+                context.state.mqtt.instance.onConnectionLost = (res) => {
+                    window.console.log("onConnectionLost", res);
+                    this.commit('setMqttStatus', false);
+
+
+                    setTimeout(() => {
+                        window.console.log('MQTT: Automatic reconnect attempt.');
+                        this.dispatch('mqttConnect');
+                    }, 5000);
+                };
+            }
+            else {
+                window.console.log('mqttConnect: Credentials required!', mqtt);
+            }
+        },
+
+        mqttSubscribe: function (context, filter) {
+            if (context.state.mqtt.isConnected) {
+                context.state.mqtt.instance.subscribe(filter, {
+                    onSuccess: () =>
+                        window.console.log("subscribe to '" + filter + "': ok"),
+                    onFailure: () =>
+                        window.console.log("subscribe to '" + filter + "': FAIL!")
+                });
+            }
+            else {
+                window.console.log('mqttSubscribe: is not connected!');
+            }
+        },
+
+        mqttUnsubscribe: function (context, filter) {
+            if (context.state.mqtt.isConnected) {
+                context.state.mqtt.instance.subscribe(filter, {
+                    onSuccess: () =>
+                        window.console.log("unsubscribe from '" + filter + "': ok"),
+                    onFailure: () =>
+                        window.console.log("unsubscribe from '" + filter + "': FAIL!")
+                });
+            }
+            else {
+                window.console.log('mqttUnsubscribe: is not connected!');
+            }
+        },
+
+        mqttSendMessage: function (context, data) {
+            //this.mqtt.send(topic, data, qos, retain);
+            var msg = new window.Paho.MQTT.Message(data.payload);
+            msg.destinationName = data.topic;
+            msg.retained = data.retain || false;
+            msg.qos = data.qos || 0;
+
+            context.state.mqtt.instance.send(msg);
         }
     },
 
