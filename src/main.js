@@ -14,12 +14,16 @@ Vue.use(vuetify, {
 });
 
 /* websockets */
+
 import vueNativeSock from 'vue-native-websocket'
-Vue.use(vueNativeSock, 'ws://192.168.127.1/ws', {
-  store: store,
-  reconnection: false,       // (Boolean) whether to reconnect automatically (false)
-  // reconnectionDelay: 1000,  // (Number) how long to initially wait before attempting a new (1000) 
-})
+if (window.location.hostname === '192.168.127.1') {
+  /* local mode only */
+  Vue.use(vueNativeSock, 'ws://192.168.127.1/ws', {
+    store: store,
+    reconnection: true,       // (Boolean) whether to reconnect automatically (false)
+    reconnectionDelay: 2000,  // (Number) how long to initially wait before attempting a new (1000) 
+  })
+}
 
 // my global components
 import SvgIcon from '@/components/Svg/Icon.vue';
