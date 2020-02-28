@@ -59,6 +59,13 @@ export default {
             this.$connect(); /* start websocket */
         } else {
             this.$store.commit('setStartAs', 'app');
+            /* FIXME! FIXME! FIXME! */
+            if (this.$store.state.mqtt.isConnected !== true) {
+                this.$store.dispatch('mqttConnect');
+                setInterval(() => {
+                    this.mqttState();
+                }, 5000);
+            }
         }
 
         /* start websocket TODO: conditions... */
