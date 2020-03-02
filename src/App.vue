@@ -74,7 +74,7 @@ export default {
 
         this.$store.dispatch('onEverySec');
 
-        this.$router.push({ path: '/connect' });
+        this.$router.push({ path: '/control' });
     },
 
     methods: {

@@ -40,7 +40,8 @@
                                     </span>
                                 </v-list-item-title>
                                 <v-list-item-content>
-                                    {{ '>>> ' + device.data.outputs }}
+                                    {{ 'out ' + device.data.outputs }}
+                                    {{ 'inp ' + device.data.inputs }}
                                 </v-list-item-content>
                             </v-list-item-content>
                         </v-list-item>

@@ -1,11 +1,16 @@
 <template>
     <div>
-        <v-card v-for="(output, i) in outputs" :key="i" class="ma-2" elevation="4">
+        <v-card
+            v-for="(output, i) in outputs"
+            :key="i"
+            class="ma-2"
+            elevation="4"
+        >
             <v-row no-gutters>
                 <v-col cols="2" class="d-flex align-center justify-center">
                     <svg-icon
-                        :name="output.state === 'on' ? 'led-on' : 'led-off'"
-                        :color="output.state === 'on' ? 'red' : 'darkgray'"
+                        :name="out[i].state === 'on' ? 'led-on' : 'led-off'"
+                        :color="out[i].state === 'on' ? 'red' : 'darkgray'"
                         size="48px"
                     />
                 </v-col>
@@ -34,8 +39,11 @@
                     <div>
                         <v-card-title
                             class="text-truncate font-weight-regular px-2 py-2"
-                        >{{ output.title }}</v-card-title>
-                        <v-card-subtitle class="px-2 py-1">{{ output.description }}</v-card-subtitle>
+                            >{{ output.title }}</v-card-title
+                        >
+                        <v-card-subtitle class="px-2 py-1">{{
+                            output.description
+                        }}</v-card-subtitle>
                     </div>
                 </v-col>
             </v-row>
@@ -44,11 +52,14 @@
                 <v-layout justify-center>
                     <v-btn
                         :loading="output.state === 'undefined'"
-                        :disabled="output.state === 'undefined'"
+                        :disabled="true"
                         @click="action = i"
                         color="primary"
                         class="mx-0"
-                    >{{output.state === 'on' ? 'отключить' : 'включить' }}</v-btn>
+                        >{{
+                            out[i].state === 'on' ? 'отключить' : 'включить'
+                        }}</v-btn
+                    >
 
                     <!-- <v-btn
                         v-if="isOwner"
@@ -66,10 +77,32 @@
 <style scoped></style>
 
 <script>
+import { mapGetters } from 'vuex';
+
 export default {
     methods: {},
 
     computed: {
+        ...mapGetters(['isWsConnected', 'event', 'devices']),
+
+        out() {
+            var data = [];
+
+            for (let i = 0; i < 8; i++) {
+                let value = 'off';
+
+                if (this.devices[1])
+                    value =
+                        this.devices[1].data.outputs & (1 << i) ? 'on' : 'off';
+
+                data.push({
+                    state: value
+                });
+            }
+
+            return data;
+        },
+
         outputs() {
             return this.$store.state.data.outputs;
         },
