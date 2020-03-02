@@ -18,7 +18,33 @@
                     </p>
                     <p class="text-center font-weight-black">
                         Текущая версия: {{ $store.state.version }}
+                        ({{}})
                     </p>
+                </v-card-text>
+                <v-card-text>
+                    <v-list flat>
+                        <v-list-item
+                            v-for="(device, i) in devices"
+                            :disabled="!device.online"
+                            :key="i"
+                            link
+                        >
+                            <!-- <v-list-item-action>
+                                <svg-icon :name="item.icon" />
+                            </v-list-item-action> -->
+
+                            <v-list-item-content>
+                                <v-list-item-title>
+                                    <span>
+                                        {{ device.type + '/' + device.devId }}
+                                    </span>
+                                </v-list-item-title>
+                                <v-list-item-content>
+                                    {{ '>>> ' + device.data.outputs }}
+                                </v-list-item-content>
+                            </v-list-item-content>
+                        </v-list-item>
+                    </v-list>
                 </v-card-text>
                 <v-card-actions>
                     <v-layout text-center wrap class="ma-8">
@@ -36,3 +62,16 @@
         </v-layout>
     </v-container>
 </template>
+
+<script>
+import { mapGetters } from 'vuex';
+
+export default {
+    computed: {
+        // ...mapState({
+        //     localDevice: state => state.device.local
+        // })
+        ...mapGetters(['isWsConnected', 'event', 'devices'])
+    }
+};
+</script>

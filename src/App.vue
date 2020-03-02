@@ -15,7 +15,6 @@
 
 // import { mapState } from 'vuex';
 import { mapGetters } from 'vuex';
-
 import AppNavigation from './components/Navigation';
 // import { setTimeout } from 'timers';
 
@@ -73,7 +72,9 @@ export default {
             if (this.$store.state.startAs === 'local' && !this.isWsConnected)
                 this.$connect();
 
-        //if (window.origin) this.$router.push({ path: '/connect' });
+        this.$store.dispatch('onEverySec');
+
+        this.$router.push({ path: '/connect' });
     },
 
     methods: {
@@ -124,11 +125,6 @@ export default {
                     retain: true,
                     qos: 1
                 });
-
-                this.$store.dispatch(
-                    'mqttSubscribe',
-                    'FF00/NTdHEDI5MTA8AEoA/#'
-                );
             }
         }
     },
@@ -137,6 +133,7 @@ export default {
         isWsConnected: function() {
             //this.switchRoute();
         },
+
         event: function() {
             //this.switchRoute();
         }
@@ -144,6 +141,7 @@ export default {
 
     computed: {
         ...mapGetters(['isWsConnected', 'event'])
+
         // ...mapState({
         //     localDevice: state => state.device.local
         // })

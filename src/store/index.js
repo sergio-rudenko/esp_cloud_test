@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import { isUndefined } from 'util';
+const axios = require('axios').default;
 
 Vue.use(Vuex);
 
@@ -12,6 +13,10 @@ export default new Vuex.Store({
         startAs: "",
         debug: true,
 
+        timer: null,
+        uptime: 0,
+
+        deviceList: [],
 
         socket: {
             isConnected: null,
@@ -20,9 +25,9 @@ export default new Vuex.Store({
         },
 
         mqtt: {
+            instance: null,
             isConnected: null,
             reconnectError: null,
-            instance: null,
             message: ''
         },
 
@@ -134,17 +139,51 @@ export default new Vuex.Store({
             return state.socket.isConnected;
         },
 
+        isMqttConnected: state => {
+            return state.mqtt.isConnected;
+        },
+
         message: state => state.socket.message,
+        mqttMsg: state => state.mqtt.message,
         event: state => state.event,
 
         //user: state => state.credentials.user,
         //token: state => state.credentials.token,
 
         local: state => state.local,
-        credentials: state => state.credentials
+        credentials: state => state.credentials,
+
+        devices: state => state.deviceList
+
+        // devices: state => {
+
+        // return state.deviceList
+        //     .filter(function (d) {
+        //         //FIXME! filter only target type devices
+        //         if (d.data == null) {
+        //             d.data = { inputs: 0, outputs: 0 };
+        //         }
+
+        //         const targetType = 'FF00';
+        //         return d.type == targetType;
+        //     })
+        //     .sort(function (a, b) {
+        //         //TODO: sort devices by status|name
+        //         return a.devId > b.devId ? 1 : -1;
+        //     });
+        //        }
     },
 
     mutations: {
+        _setTimer(state, data) {
+            state.timer = data;
+        },
+
+        _incUptime(state) {
+            state.uptime++;
+            //window.console.log('uptime:', state.uptime);
+        },
+
         setStartAs(state, data) {
             window.console.log('setStartAs:', data);
             state.startAs = data;
@@ -283,66 +322,158 @@ export default new Vuex.Store({
             }
         },
 
-        setMqttInstance(state, data) {
+        _mqttInstance(state, data) {
             window.console.log('mqttinstance:', data);
             state.mqtt.instance = data;
         },
 
-        setMqttStatus(state, data) {
-            window.console.log('mqttStatus:', data === true ? 'connected' : 'disconnected');
-            state.mqtt.isConnected = (data === true);
+        MQTT_ONOPEN(state) {
+            window.console.log('MQTT_ONOPEN');
+            state.mqtt.isConnected = true;
         },
 
-        setMqttNessage(state, data) {
-            state.mqtt.message = data;
-            if (state.debug) window.console.log(
-                "topic:'" +
-                state.mqtt.message.destinationName +
-                "', payload: '" +
-                state.mqtt.message.payloadString +
-                "'"
-            );
+        MQTT_ONERROR(state) {
+            window.console.log('MQTT_ONERROR');
+            state.mqtt.isConnected = false;
+        },
+
+        MQTT_RECONNECT(state, event) {
+            window.console.log("MQTT_RECONNECT", event);
+            state.mqtt.isConnected = false;
+        },
+
+        MQTT_ONMESSAGE(state, message) {
+            //state.mqtt.message = message;
+            const result = message.destinationName.match(/(.*)\/(.*)\/(.*)/);
+
+            if (result) {
+                state.mqtt.message = {
+                    type: result[1],
+                    devId: result[2],
+                    path: result[3],
+                    payload: message.payloadString
+                };
+
+                if (state.mqtt.message.path === 'status') {
+                    this.commit('setDeviceStatus', {
+                        type: state.mqtt.message.type,
+                        devId: state.mqtt.message.devId,
+                        status: JSON.parse(state.mqtt.message.payload)
+                    });
+                }
+
+                if (state.mqtt.message.path === 'data') {
+                    // for (let k = 0; k < state.deviceList.length; k++) {
+                    //     if (state.deviceList[k].type == state.mqtt.message.type &&
+                    //         state.deviceList[k].devId == state.mqtt.message.devId) {
+
+                    //         //                    if (state.deviceList[k].data != data.data) {
+                    //         //state.deviceList[k].data = state.mqtt.message.payload;
+                    //         Vue.set(state.deviceList[k], 'data', state.mqtt.message.payload);
+                    //         window.console.log('data:', state.deviceList[k].data);
+                    //         //                  }
+                    //     }
+                    // }
+
+
+                    // window.console.log('data:', state.mqtt.message.payload);
+                    this.commit('setDeviceData', {
+                        type: state.mqtt.message.type,
+                        devId: state.mqtt.message.devId,
+                        value: JSON.parse(state.mqtt.message.payload)
+                    });
+                }
+            }
+            else {
+                window.console.log("ERROR! topic:'" +
+                    message.destinationName + "', payload: '" +
+                    message.payloadString + "'");
+            }
+        },
+
+        setDeviceStatus(state, data) {
+            for (let k = 0; k < state.deviceList.length; k++) {
+                if (state.deviceList[k].type == data.type &&
+                    state.deviceList[k].devId == data.devId) {
+
+                    if (state.deviceList[k].online != (data.state != 'offline')) {
+                        state.deviceList[k].online = (data.state != 'offline');
+
+                        window.console.log(
+                            state.deviceList[k].type + '/' +
+                            state.deviceList[k].devId + " online: " +
+                            state.deviceList[k].online);
+                    }
+                }
+            }
+        },
+
+        setDeviceData(state, data) {
+            // window.console.log('setDeviceData: ', data);
+
+            for (let k = 0; k < state.deviceList.length; k++) {
+                if (state.deviceList[k].type == data.type &&
+                    state.deviceList[k].devId == data.devId) {
+
+                    Vue.set(state.deviceList[k], 'data', data.value);
+                    // window.console.log('data:', state.deviceList[k].data);
+                }
+            }
+        },
+
+        updateDeviceList(state, data) {
+            // unvalidate list
+            state.deviceList.forEach(item => {
+                item.checked = false;
+            });
+
+            for (let i = 0; i < data.length; i++) {
+                let index = -1;
+
+                for (let j = 0; j < state.deviceList.length; j++) {
+                    if (state.deviceList[j].type == data[i].type &&
+                        state.deviceList[j].devId == data[i].devId) {
+                        index = j;
+                    }
+                }
+
+                if (index < 0) {
+                    data[i].checked = true;
+                    data[i].online = false;
+                    data[i].data = { inputs: 0, outputs: 0 }
+
+                    state.deviceList.push(data[i]);
+                    index = state.deviceList.length - 1;
+
+                    this.dispatch(
+                        'mqttSubscribe',
+                        state.deviceList[index].type + '/' +
+                        state.deviceList[index].devId + '/#'
+                    );
+                }
+                else {
+                    // Vue.set(state.deviceList[index], 'data', data);
+                    // Vue.set(state.deviceList[index], 'online', online);
+                    Vue.set(state.deviceList[index], 'checked', true);
+
+                    window.console.log('updated: ',
+                        state.deviceList[index].type + '/' +
+                        state.deviceList[index].devId);
+                }
+            }
+
+            // delete & unsubscribe
+            for (let k = 0; k < state.deviceList.length; k++) {
+                if (state.deviceList[k].checked == false) {
+                    this.dispatch(
+                        'mqttUnsubscribe',
+                        state.deviceList[k].type + '/' +
+                        state.deviceList[k].devId + '/#'
+                    );
+                    state.deviceList.splice(k);
+                }
+            }
         }
-
-
-        // setStartAs(state, data) {
-        //     window.console.log('setStartAs:', data);
-        //     state.startAs = data;
-        // },
-
-
-        // this.$store.commit('updateDeviceText', {
-        //     deviceUid: this.hostUid,
-        //     componentUid: this.component.uid,
-        //     name: this.name,
-        //     description: this.description
-        // });
-
-        // updateDeviceText(state, data) {
-        //     window.console.log('updateDeviceText');
-        //     window.console.log('host = ' + data.deviceUid);
-        //     window.console.log('uid = ' + data.componentUid);
-        //     window.console.log('name = ' + data.name);
-        //     window.console.log('desc = ' + data.description);
-
-        //     const host_uid = data.deviceUid;
-        //     const component_uid = data.componentUid;
-
-        //     var host_device = state.devices.filter(function (h) {
-        //         return h.uid == host_uid;
-        //     })[0];
-
-        //     window.console.log(host_device);
-
-        //     var component_device = host_device.components.filter(function (c) {
-        //         return c.uid == component_uid;
-        //     })[0];
-
-        //     window.console.log(component_device);
-
-        //     component_device.name = data.name;
-        //     component_device.description = data.description;
-        // }
     },
 
     actions: {
@@ -361,7 +492,7 @@ export default new Vuex.Store({
 
                 window.console.log("MQTT: connecting to '" + mqtt.host + "' as " + mqtt.user);
                 var connectOptions = {
-                    timeout: 30,
+                    timeout: 300,
                     useSSL: true,
                     userName: mqtt.user,
                     password: mqtt.pass,
@@ -369,34 +500,32 @@ export default new Vuex.Store({
                     keepAliveInterval: 60,
 
                     onSuccess: () => {
-                        this.commit('setMqttStatus', true);
+                        this.commit('MQTT_ONOPEN');
                     },
                     onFailure: () => {
-                        this.commit('setMqttStatus', false);
+                        this.commit('MQTT_ONERROR');
                     },
                 };
 
-                this.commit('setMqttInstance', new window.Paho.MQTT.Client(
+                this.commit('_mqttInstance', new window.Paho.MQTT.Client(
                     mqtt.host, mqtt.port, "/mqtt", mqtt.clientId
                 ));
 
                 context.state.mqtt.instance.connect(connectOptions);
 
                 context.state.mqtt.instance.onMessageArrived = (msg) => {
-                    //window.console.log("onMessageArrived", msg);
-                    this.commit('setMqttNessage', msg);
+                    this.commit('MQTT_ONMESSAGE', msg);
                 };
 
                 context.state.mqtt.instance.onConnectionLost = (res) => {
-                    window.console.log("onConnectionLost", res);
-                    this.commit('setMqttStatus', false);
-
+                    this.commit('MQTT_RECONNECT', res);
 
                     setTimeout(() => {
-                        window.console.log('MQTT: Automatic reconnect attempt.');
+                        window.console.log('MQTT: Reconnect attempt');
                         this.dispatch('mqttConnect');
                     }, 5000);
                 };
+
             }
             else {
                 window.console.log('mqttConnect: Credentials required!', mqtt);
@@ -439,6 +568,26 @@ export default new Vuex.Store({
             msg.qos = data.qos || 0;
 
             context.state.mqtt.instance.send(msg);
+        },
+
+        onEverySec: function (context) {
+            if (context.state.timer === null) {
+                this.commit('_setTimer', setInterval(
+                    () => {
+                        if (context.state.uptime % 15 == 0) {
+                            axios({
+                                method: 'get',
+                                //url: 'https://sa100cloud.com/app/kv/aquabast/version',
+                                url: 'https://sa100cloud.com/cloud/user/devices',
+                                headers: { 'Token': '71ea68c5d042ab636ba9a053a1dda7e2' }
+                            })
+                                .then(response => this.commit('updateDeviceList', response.data));
+
+                        }
+                        this.commit('_incUptime');
+                    }, 1000
+                ));
+            }
         }
     },
 

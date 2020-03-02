@@ -6,6 +6,7 @@ import router from './router';
 
 import vuetify from './plugins/vuetify';
 
+
 import "vuetify/dist/vuetify.min.css";
 import "@mdi/font/css/materialdesignicons.css";
 
@@ -13,8 +14,10 @@ Vue.use(vuetify, {
   iconfont: "mdi"
 });
 
-/* websockets */
 
+
+
+/* websockets */
 import vueNativeSock from 'vue-native-websocket'
 if (window.location.hostname === '192.168.127.1') {
   /* local mode only */
@@ -28,7 +31,6 @@ if (window.location.hostname === '192.168.127.1') {
 // my global components
 import SvgIcon from '@/components/Svg/Icon.vue';
 Vue.component('SvgIcon', SvgIcon)
-
 Vue.config.productionTip = false;
 
 /*const app =*/new Vue({
