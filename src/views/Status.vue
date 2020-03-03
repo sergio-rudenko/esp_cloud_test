@@ -4,7 +4,6 @@
             <span class="font-weight-bold ma-4">
                 Органы управления:
             </span>
-
             <v-row>
                 <v-col cols="6">
                     <v-row v-for="(jumper, i) in jumpers" :key="i">
@@ -29,24 +28,24 @@
                     </v-row>
                 </v-col>
                 <v-col cols="6">
-                    <v-row v-for="(jumper, i) in jumpers" :key="i">
+                    <v-row v-for="(button, i) in buttons" :key="i">
                         <v-col
                             cols="2"
                             class="d-flex align-center justify-center pa-0 ml-4"
                         >
                             <svg-icon
                                 :color="
-                                    jumper.state === true ? 'red' : 'darkgray'
+                                    button.state === true ? 'red' : 'darkgray'
                                 "
                                 :name="
-                                    jumper.state === true
+                                    button.state === true
                                         ? 'lightbulb-on-outline'
                                         : 'lightbulb-off-outline'
                                 "
                             />
                         </v-col>
                         <v-col style="font-size: 0.9rem;">
-                            {{ jumper.title }}
+                            {{ button.title }}
                         </v-col>
                     </v-row>
                 </v-col>
@@ -132,14 +131,65 @@ const gradients = [
     ['#f72047', '#ffd200', '#1feaea']
 ];
 
-import SvgIcon from '@/components/Svg/Icon.vue';
+import { mapGetters } from 'vuex';
 
 export default {
-    components: {
-        SvgIcon
+    created() {
+        this.$store.commit('setTitle', 'Контроль:');
     },
 
     computed: {
+        ...mapGetters(['isWsConnected', 'isMqttConnected', 'devices']),
+
+        device() {
+            const d = this.devices.filter(item => {
+                return (
+                    item.type == this.$store.state.currentDevice.type &&
+                    item.devId == this.$store.state.currentDevice.devId
+                );
+            });
+            return d[0];
+        },
+
+        jumpers() {
+            var j = [];
+
+            for (let i = 0; i < 4; i++) {
+                let value = false;
+
+                if (this.device) {
+                    value =
+                        this.device.data.inputs & (1 << (i + 4)) ? false : true;
+                }
+
+                j.push({
+                    title: 'Джампер №' + (i + 1),
+                    state: value
+                });
+            }
+
+            return j;
+        },
+
+        buttons() {
+            var b = [];
+
+            for (let i = 0; i < 4; i++) {
+                let value = false;
+
+                if (this.device) {
+                    value = this.device.data.inputs & (1 << i) ? false : true;
+                }
+
+                b.push({
+                    title: 'Кнопка №' + (i + 1),
+                    state: value
+                });
+            }
+
+            return b;
+        },
+
         temperatureColor() {
             var color = 'gray';
 
@@ -153,15 +203,8 @@ export default {
 
     data() {
         return {
-            jumpers: [
-                { title: 'Джампер №1', state: true },
-                { title: 'Джампер №2', state: true },
-                { title: 'Джампер №3', state: false },
-                { title: 'Джампер №4', state: false }
-            ],
-
             temperature: {
-                current: 20.7,
+                current: 0.0,
                 history: [
                     25.5,
                     22.4,

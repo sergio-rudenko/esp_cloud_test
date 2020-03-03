@@ -306,11 +306,11 @@ export default new Vuex.Store({
             state.currentDevice.type = data.type;
         },
 
-        setOutput(state, data) {
-            window.console.log('setOutput: ', data);
-            window.console.log('setOutput: ' + data.num + ' -> ' + data.value);
-            state.data.outputs[parseInt(data.num)].state = data.value;
-        },
+        // setOutput(state, data) {
+        //     window.console.log('setOutput: ', data);
+        //     window.console.log('setOutput: ' + data.num + ' -> ' + data.value);
+        //     state.data.outputs[parseInt(data.num)].state = data.value;
+        // },
 
         setUserCredentials(state, data) {
             window.console.log('setUserCredentials: ', data);

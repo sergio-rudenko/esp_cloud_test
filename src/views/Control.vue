@@ -53,7 +53,7 @@ export default {
     },
 
     computed: {
-        ...mapGetters(['isWsConnected', 'event', 'devices']),
+        ...mapGetters(['isWsConnected', 'isMqttConnected', 'devices']),
 
         device() {
             const d = this.devices.filter(item => {
@@ -62,7 +62,6 @@ export default {
                     item.devId == this.$store.state.currentDevice.devId
                 );
             });
-
             return d[0];
         },
 
