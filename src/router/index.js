@@ -1,10 +1,10 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
-import Connect from '../views/Connect.vue';
 import Home from '../views/Home.vue';
 
-import Control from '../views/Control.vue';
+import List from '../views/List.vue';
 import Status from '../views/Status.vue';
+import Control from '../views/Control.vue';
 
 import Initialization from '../views/Initialization.vue';
 import Signup from '../views/SignUp.vue';
@@ -19,9 +19,9 @@ const routes = [
     },
 
     {
-        path: '/connect',
-        name: 'connect',
-        component: Connect
+        path: '/list',
+        name: 'list',
+        component: List
     },
     /* setup */
     {

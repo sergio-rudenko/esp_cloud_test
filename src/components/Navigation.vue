@@ -7,7 +7,9 @@
             <v-toolbar-title>{{ title }}</v-toolbar-title>
 
             <v-spacer />
-            <v-btn @click="reload()" color="primary" v-text="'R'" />
+            <!-- <v-btn @click="reload()" color="primary" v-text="'R'" /> -->
+            <svg-icon :name="uplinkIcon" size="36px" color="white" />
+            <svg-icon name="INFO" size="36px" color="white" />
         </v-app-bar>
 
         <v-navigation-drawer
@@ -31,7 +33,7 @@
                         </v-list-item-content>
                     </v-list-item>
                     <div class="pa-2">
-                        <v-btn block rounded text to="/login">{{
+                        <v-btn block rounded text to="/login" disabled>{{
                             logoutTitle
                         }}</v-btn>
                     </div>
@@ -84,6 +86,15 @@
                             @click.prevent
                         />
                     </v-list-item>
+                    <v-list-item>
+                        <v-btn
+                            @click="reload()"
+                            color="primary"
+                            v-text="'Reload source'"
+                            block
+                            text
+                        />
+                    </v-list-item>
                 </v-list>
             </template>
         </v-navigation-drawer>
@@ -93,20 +104,27 @@
 <style scoped></style>
 
 <script>
-// import { isUndefined } from 'util';
+import { mapGetters } from 'vuex';
 
 export default {
     mounted() {},
 
     methods: {
         reload() {
-            // window.console.log('host: ', window.location.hostname);
-            // window.console.log('path: ', window.location.pathname);
+            this.$router.push({ path: '/' });
             window.location.reload();
         }
     },
 
     computed: {
+        ...mapGetters(['isWsConnected', 'isMqttConnected']),
+
+        uplinkIcon() {
+            var icon = this.isMqttConnected ? 'cloud-online' : 'cloud-offline';
+
+            return icon;
+        },
+
         title() {
             return this.$store.state.application.title;
         },
@@ -123,13 +141,6 @@ export default {
             return this.$store.state.credentials.user;
         }
     },
-
-    // props: {
-    //     title: {
-    //         type: String,
-    //         default: 'ESP::Cloud'
-    //     }
-    // },
 
     data() {
         return {

@@ -17,6 +17,10 @@ export default new Vuex.Store({
         uptime: 0,
 
         deviceList: [],
+        currentDevice: {
+            devId: null,
+            type: null
+        },
 
         socket: {
             isConnected: null,
@@ -37,24 +41,22 @@ export default new Vuex.Store({
             outputs: [
                 {
                     title: 'Светодиод 1',
-                    description: 'Управление доступно всем',
+                    description: 'Доступно всем',
                     state: 'on'
                 },
                 {
                     title: 'Светодиод 2',
-                    description:
-                        'Управление доступно на уровнях доступа "Владелец" и "Пользователь"',
+                    description: '"Владелец" и "Пользователь"',
                     state: 'off'
                 },
                 {
                     title: 'Светодиод 3',
-                    description:
-                        'Управление доступно на уровнях доступа "Владелец" и "Пользователь"',
+                    description: '"Владелец" и "Пользователь"',
                     state: 'on'
                 },
                 {
                     title: 'Светодиод 4',
-                    description: 'Управление доступно только владельцу',
+                    description: 'только "Владелец"',
                     state: 'off'
                 }
             ]
@@ -65,7 +67,16 @@ export default new Vuex.Store({
             icon: 'MENU',
 
             menu: [
-                // { heading: 'menu' },
+                // { heading: 'Устройство' },
+                {
+                    title: 'Список устройств',
+                    path: '/list',
+                    icon: 'MENU',
+                    disabled: false
+                },
+                { divider: true },
+
+                // { heading: 'Устройство' },
                 {
                     title: 'Управление',
                     path: '/control',
@@ -82,13 +93,13 @@ export default new Vuex.Store({
                     title: 'Настройки',
                     path: '/settings',
                     icon: 'settings',
-                    disabled: false
+                    disabled: true
                 },
                 {
                     title: 'Устройство',
                     path: '/setup/wifi',
                     icon: 'memory',
-                    disabled: false
+                    disabled: true
                 },
                 { divider: true },
                 {
@@ -118,7 +129,7 @@ export default new Vuex.Store({
             mqtt: {
                 port: 3883,
                 host: 'sa100cloud.com',
-                clientId: '0c79113e83070d39',
+                //clientId: '0c79113e83070d39',
                 user: 'b1c2b492c04c829a',
                 pass: 'd042675215ce302b'
             },
@@ -284,9 +295,15 @@ export default new Vuex.Store({
             state.application.icon = data;
         },
 
-        setOutputUndefined(state, num) {
-            window.console.log('setOutputUndefined: ', num);
-            state.data.outputs[parseInt(num)].state = 'undefined';
+        setTitle(state, data) {
+            window.console.log('setTitle: ', data);
+            state.application.title = data;
+        },
+
+        setCurrentDevice(state, data) {
+            window.console.log('setCurrentDevice: ', data);
+            state.currentDevice.devId = data.devId;
+            state.currentDevice.type = data.type;
         },
 
         setOutput(state, data) {
@@ -312,9 +329,6 @@ export default new Vuex.Store({
         setCloudToken(state, data) {
             if (state.debug) {
                 window.console.log('setCloudToken: ', data);
-
-                if (data.length)
-                    state.title = state.title + "*";
             }
             if (data.length) {
                 state.credentials.token = data;
@@ -486,7 +500,8 @@ export default new Vuex.Store({
 
         mqttConnect: function (context) {
             const mqtt = context.state.credentials.mqtt;
-            if (!isUndefined(window.Paho.MQTT.Client) && mqtt.clientId !== null
+            if (!isUndefined(window.Paho.MQTT.Client)
+                && context.state.credentials.token !== null
                 && mqtt.host !== null && mqtt.port !== null
                 && mqtt.user !== null && mqtt.pass !== null) {
 
@@ -508,7 +523,7 @@ export default new Vuex.Store({
                 };
 
                 this.commit('_mqttInstance', new window.Paho.MQTT.Client(
-                    mqtt.host, mqtt.port, "/mqtt", mqtt.clientId
+                    mqtt.host, mqtt.port, "/mqtt", context.state.credentials.token
                 ));
 
                 context.state.mqtt.instance.connect(connectOptions);
@@ -519,11 +534,10 @@ export default new Vuex.Store({
 
                 context.state.mqtt.instance.onConnectionLost = (res) => {
                     this.commit('MQTT_RECONNECT', res);
-
-                    setTimeout(() => {
-                        window.console.log('MQTT: Reconnect attempt');
-                        this.dispatch('mqttConnect');
-                    }, 5000);
+                    // setTimeout(() => {
+                    //     window.console.log('MQTT: Reconnect attempt');
+                    //     this.dispatch('mqttConnect');
+                    // }, 5000);
                 };
 
             }

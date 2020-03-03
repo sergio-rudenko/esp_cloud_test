@@ -35,19 +35,20 @@ export default {
             localStorage.setItem('version', this.$store.state.version);
         }
 
-        /* cloud token */
+        /* cloud token  */
         //FIXME! const token = localStorage.getItem('CT');
-        const token = '71ea68c5d042ab636ba9a053a1dda7e2';
-        if (token) {
-            this.$store.commit('setCloudToken', token);
-        }
 
         if (
             window.location.hostname === 'localhost' ||
             window.location.hostname === '127.0.0.1'
         ) {
             this.$store.commit('setStartAs', 'dev');
-            if (this.$store.state.mqtt.isConnected !== true) {
+            this.$store.commit(
+                'setCloudToken',
+                '1aa08d54fd3f6e25bbba6e9019664088'
+            );
+
+            if (this.isMqttConnected !== true) {
                 this.$store.dispatch('mqttConnect');
                 setInterval(() => {
                     this.mqttState();
@@ -57,9 +58,14 @@ export default {
             this.$store.commit('setStartAs', 'local');
             this.$connect(); /* start websocket */
         } else {
-            this.$store.commit('setStartAs', 'app');
             /* FIXME! FIXME! FIXME! */
-            if (this.$store.state.mqtt.isConnected !== true) {
+            this.$store.commit('setStartAs', 'app');
+            this.$store.commit(
+                'setCloudToken',
+                '71ea68c5d042ab636ba9a053a1dda7e2'
+            );
+
+            if (this.isMqttConnected !== true) {
                 this.$store.dispatch('mqttConnect');
                 setInterval(() => {
                     this.mqttState();
@@ -74,7 +80,7 @@ export default {
 
         this.$store.dispatch('onEverySec');
 
-        this.$router.push({ path: '/control' });
+        // this.$router.push({ path: '/control' });
     },
 
     methods: {
@@ -115,9 +121,9 @@ export default {
 
         // MQTT --------------------------------------------------------------
         mqttState() {
-            if (this.$store.state.mqtt.isConnected) {
+            if (this.isMqttConnected) {
                 this.$store.dispatch('mqttSendMessage', {
-                    topic: 'status/' + this.User.mqttClientId,
+                    topic: 'status/' + this.credentials.token,
                     payload: JSON.stringify({
                         startAs: this.$store.state.startAs,
                         time_t: Math.trunc(new Date().getTime() / 1000)
@@ -125,6 +131,8 @@ export default {
                     retain: true,
                     qos: 1
                 });
+            } else {
+                this.$store.dispatch('mqttConnect');
             }
         }
     },
@@ -140,7 +148,7 @@ export default {
     },
 
     computed: {
-        ...mapGetters(['isWsConnected', 'event'])
+        ...mapGetters(['credentials', 'isWsConnected', 'isMqttConnected'])
 
         // ...mapState({
         //     localDevice: state => state.device.local
@@ -148,19 +156,7 @@ export default {
     },
 
     data() {
-        return {
-            mqtt: null,
-            mqttTimeout: null,
-            User: {
-                name: 'owner',
-                phone: '+79185387721',
-                email: '',
-                mqttClientId: '0c79113e83070d39',
-                mqttUsername: 'b1c2b492c04c829a',
-                mqttPassword: 'd042675215ce302b'
-            },
-            Token: '71ea68c5d042ab636ba9a053a1dda7e2'
-        };
+        return {};
     }
 };
 </script>
