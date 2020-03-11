@@ -333,25 +333,25 @@ export default new Vuex.Store({
 
         MQTT_ONMESSAGE(state, message) {
             //state.mqtt.message = message;
-            const result = message.destinationName.match(/(.*)\/(.*)\/(.*)/);
+            //const result = message.destinationName.match(/^(.+)\/(.+)\/(.+)/);
+            state.mqtt.message = {
+                topic: message.destinationName,
+                payload: message.payloadString
+            };
 
-            if (result) {
-                state.mqtt.message = {
-                    type: result[1],
-                    devId: result[2],
-                    path: result[3],
-                    payload: message.payloadString
-                };
+            const spl = message.destinationName.split('/', 4);
+            //window.console.log("spl >>> ", spl);
 
-                if (state.mqtt.message.path === 'status') {
+            if (spl.length >= 3) {
+                if (spl[2] === 'status') {
                     this.commit('setDeviceStatus', {
-                        type: state.mqtt.message.type,
-                        devId: state.mqtt.message.devId,
+                        type: spl[0],
+                        devId: spl[1],
                         status: JSON.parse(state.mqtt.message.payload)
                     });
                 }
 
-                if (state.mqtt.message.path === 'data') {
+                if (spl[2] === 'data') {
                     // for (let k = 0; k < state.deviceList.length; k++) {
                     //     if (state.deviceList[k].type == state.mqtt.message.type &&
                     //         state.deviceList[k].devId == state.mqtt.message.devId) {
@@ -367,8 +367,8 @@ export default new Vuex.Store({
 
                     // window.console.log('data:', state.mqtt.message.payload);
                     this.commit('setDeviceData', {
-                        type: state.mqtt.message.type,
-                        devId: state.mqtt.message.devId,
+                        type: spl[0],
+                        devId: spl[1],
                         value: JSON.parse(state.mqtt.message.payload)
                     });
                 }

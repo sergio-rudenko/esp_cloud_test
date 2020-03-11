@@ -33,6 +33,32 @@
             </v-list-item>
             <v-divider />
         </v-list>
+
+        <p class="text-center font-weight-black mt-8">
+            Уровень доступа:
+        </p>
+
+        <v-layout align-center justify-center>
+            <v-radio-group v-model="roleValue">
+                <v-radio
+                    v-for="(role, i) in roles"
+                    :key="i"
+                    :label="role.title"
+                    :value="role.value"
+                ></v-radio>
+            </v-radio-group>
+        </v-layout>
+        <!-- <div class="text-center">
+            <v-btn dark color="red darken-2" @click="snackbar = true">
+                Open Snackbar
+            </v-btn>
+        </div> -->
+        <v-snackbar v-model="snackbar" bottom :timeout="3000" color="error">
+            Доступ запрещен!
+            <v-btn text @click="snackbar = false">
+                ЗАКРЫТЬ
+            </v-btn>
+        </v-snackbar>
     </div>
 </template>
 
@@ -64,17 +90,10 @@ export default {
             if (this.isMqttConnected) {
                 var topic = this.device.type + '/' + this.device.devId + '/';
 
-                if (this.device.userRole == 'owner') {
-                    topic += '0/';
-                }
-                if (this.device.userRole == 'user') {
-                    topic += '2/';
-                }
-                if (this.device.userRole == 'guest') {
-                    topic += '3/';
-                }
-
+                topic += this.roleValue + '/';
                 topic += this.credentials.token + '/req/api/mcu';
+
+                window.console.log('topic: ', topic, this.roleValue);
 
                 this.$store.dispatch('mqttSendMessage', {
                     topic: topic,
@@ -98,6 +117,24 @@ export default {
     watch: {
         deviceOutputs() {
             this.setOutputs();
+        },
+
+        mqttMsg(value) {
+            window.console.log('mqttMsg: ', value);
+            const s = value.topic.split('/');
+
+            if (
+                s[0] == this.device.type &&
+                s[1] == this.device.devId &&
+                s[3] == this.credentials.token &&
+                s[4] == 'res'
+            ) {
+                const result = JSON.parse(value.payload);
+                if (result.event.error == 'access denied!') {
+                    this.snackbar = true; // show error
+                    this.setOutputs();
+                }
+            }
         }
     },
 
@@ -105,8 +142,9 @@ export default {
         ...mapGetters([
             'isWsConnected',
             'isMqttConnected',
+            'credentials',
             'devices',
-            'credentials'
+            'mqttMsg'
         ]),
 
         device() {
@@ -149,6 +187,16 @@ export default {
 
     data() {
         return {
+            snackbar: 0,
+
+            roleValue: 1,
+
+            roles: [
+                { title: 'Владелец', value: 1 },
+                { title: 'Пользователь', value: 2 },
+                { title: 'Гость', value: 3 }
+            ],
+
             outputs: [
                 {
                     title: 'Светодиод 1',
