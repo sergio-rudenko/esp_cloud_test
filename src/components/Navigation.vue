@@ -120,7 +120,7 @@ export default {
         ...mapGetters(['isWsConnected', 'isMqttConnected']),
 
         uplinkIcon() {
-            var icon = this.isMqttConnected ? 'cloud-online' : 'cloud-offline';
+            var icon = this.isMqttConnected ? 'cloud' : 'cloud-offline';
 
             return icon;
         },

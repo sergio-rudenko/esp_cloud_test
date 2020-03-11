@@ -9,7 +9,7 @@ export default new Vuex.Store({
     strict: true,
 
     state: {
-        version: '0.2',
+        version: '0.23',
         startAs: "",
         debug: true,
 
@@ -36,31 +36,6 @@ export default new Vuex.Store({
         },
 
         event: '',
-
-        data: {
-            outputs: [
-                {
-                    title: 'Светодиод 1',
-                    description: 'Доступно всем',
-                    state: 'on'
-                },
-                {
-                    title: 'Светодиод 2',
-                    description: '"Владелец" и "Пользователь"',
-                    state: 'off'
-                },
-                {
-                    title: 'Светодиод 3',
-                    description: '"Владелец" и "Пользователь"',
-                    state: 'on'
-                },
-                {
-                    title: 'Светодиод 4',
-                    description: 'только "Владелец"',
-                    state: 'off'
-                }
-            ]
-        },
 
         application: {
             title: 'ESP::Cloud',
@@ -505,7 +480,10 @@ export default new Vuex.Store({
                 && mqtt.host !== null && mqtt.port !== null
                 && mqtt.user !== null && mqtt.pass !== null) {
 
-                window.console.log("MQTT: connecting to '" + mqtt.host + "' as " + mqtt.user);
+                //context.state.credentials.token 
+                var clientId = [...Array(16)].map(() => (~~(Math.random() * 36)).toString(36)).join('');
+                window.console.log("MQTT: connecting to '" + mqtt.host + "' as " + mqtt.user + '::' + clientId);
+
                 var connectOptions = {
                     timeout: 300,
                     useSSL: true,
@@ -523,7 +501,7 @@ export default new Vuex.Store({
                 };
 
                 this.commit('_mqttInstance', new window.Paho.MQTT.Client(
-                    mqtt.host, mqtt.port, "/mqtt", context.state.credentials.token
+                    mqtt.host, mqtt.port, "/mqtt", clientId
                 ));
 
                 context.state.mqtt.instance.connect(connectOptions);
