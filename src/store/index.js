@@ -9,7 +9,7 @@ export default new Vuex.Store({
     strict: true,
 
     state: {
-        version: '0.23',
+        version: '0.25 /proxy',
         startAs: "",
         debug: true,
 
@@ -445,9 +445,14 @@ export default new Vuex.Store({
                     // Vue.set(state.deviceList[index], 'online', online);
                     Vue.set(state.deviceList[index], 'checked', true);
 
-                    window.console.log('updated: ',
+                    this.dispatch(
+                        'mqttSubscribe',
                         state.deviceList[index].type + '/' +
-                        state.deviceList[index].devId);
+                        state.deviceList[index].devId + '/#'
+                    );
+                    // window.console.log('updated: ',
+                    //     state.deviceList[index].type + '/' +
+                    //     state.deviceList[index].devId);
                 }
             }
 
@@ -501,7 +506,7 @@ export default new Vuex.Store({
                 };
 
                 this.commit('_mqttInstance', new window.Paho.MQTT.Client(
-                    mqtt.host, mqtt.port, "/mqtt", clientId
+                    mqtt.host, 443/*mqtt.port*/, "/wss"/*"/mqtt"*/, clientId
                 ));
 
                 context.state.mqtt.instance.connect(connectOptions);

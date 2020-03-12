@@ -4,6 +4,7 @@
             <v-list-item
                 v-for="(output, i) in outputs"
                 :key="i"
+                :disabled="output.state === undefined"
                 @click="onClick(i)"
                 rounded
                 dense
@@ -54,7 +55,7 @@
             </v-btn>
         </div> -->
         <v-snackbar v-model="snackbar" bottom :timeout="3000" color="error">
-            Доступ запрещен!
+            {{ snackbarTitle }}
             <v-btn text @click="snackbar = false">
                 ЗАКРЫТЬ
             </v-btn>
@@ -87,13 +88,16 @@ export default {
         onClick(index) {
             // window.console.log('ACTION: ', index);
 
-            if (this.isMqttConnected) {
+            if (
+                this.isMqttConnected &&
+                this.outputs[index].state !== undefined
+            ) {
                 var topic = this.device.type + '/' + this.device.devId + '/';
 
                 topic += this.roleValue + '/';
                 topic += this.credentials.token + '/req/api/mcu';
 
-                window.console.log('topic: ', topic, this.roleValue);
+                // window.console.log('topic: ', topic, this.roleValue);
 
                 this.$store.dispatch('mqttSendMessage', {
                     topic: topic,
@@ -105,10 +109,9 @@ export default {
                                 (this.outputs[index].state === 1 ? 0 : 1)
                         }
                     }),
-                    retain: true,
+                    retain: false,
                     qos: 1
                 });
-
                 this.outputs[index].state = undefined;
             }
         }
@@ -120,7 +123,7 @@ export default {
         },
 
         mqttMsg(value) {
-            window.console.log('mqttMsg: ', value);
+            //window.console.log('mqttMsg: ', value);
             const s = value.topic.split('/');
 
             if (
@@ -130,9 +133,12 @@ export default {
                 s[4] == 'res'
             ) {
                 const result = JSON.parse(value.payload);
-                if (result.event.error == 'access denied!') {
-                    this.snackbar = true; // show error
-                    this.setOutputs();
+                if (result.event) {
+                    if (result.event.error) {
+                        this.snackbarTitle = result.event.error;
+                        this.snackbar = true; // show error
+                        this.setOutputs();
+                    }
                 }
             }
         }
@@ -188,6 +194,7 @@ export default {
     data() {
         return {
             snackbar: 0,
+            snackbarTitle: null,
 
             roleValue: 1,
 
