@@ -81,6 +81,13 @@
             ></v-sparkline>
         </v-card>
 
+        <v-snackbar v-model="snackbar" bottom :timeout="3000" color="error">
+            {{ snackbarTitle }}
+            <v-btn text @click="snackbar = false">
+                ЗАКРЫТЬ
+            </v-btn>
+        </v-snackbar>
+
         <!-- <v-layout>
         
         </v-layout>
@@ -138,6 +145,23 @@ export default {
         this.$store.commit('setTitle', 'Контроль:');
     },
 
+    watch: {
+        online(value) {
+            if (value === false) {
+                // window.console.log('online: ', value);
+                this.snackbarTitle = 'Нет связи с устройством!';
+                this.snackbar = true; // show error
+            }
+        },
+
+        snackbar(value) {
+            if (value === false) {
+                if (this.device.online === false)
+                    this.$router.push({ path: '/list' });
+            }
+        }
+    },
+
     computed: {
         ...mapGetters(['isWsConnected', 'isMqttConnected', 'devices']),
 
@@ -149,6 +173,10 @@ export default {
                 );
             });
             return d[0];
+        },
+
+        online() {
+            return this.device.online;
         },
 
         jumpers() {
@@ -203,6 +231,9 @@ export default {
 
     data() {
         return {
+            snackbar: 0,
+            snackbarTitle: null,
+
             temperature: {
                 current: 0.0,
                 history: [

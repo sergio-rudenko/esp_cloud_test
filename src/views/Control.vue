@@ -118,6 +118,21 @@ export default {
     },
 
     watch: {
+        online(value) {
+            if (value === false) {
+                // window.console.log('online: ', value);
+                this.snackbarTitle = 'Нет связи с устройством!';
+                this.snackbar = true; // show error
+            }
+        },
+
+        snackbar(value) {
+            if (value === false) {
+                if (this.device.online === false)
+                    this.$router.push({ path: '/list' });
+            }
+        },
+
         deviceOutputs() {
             this.setOutputs();
         },
@@ -161,6 +176,10 @@ export default {
                 );
             });
             return d[0];
+        },
+
+        online() {
+            return this.device.online;
         },
 
         deviceInputs() {

@@ -9,7 +9,7 @@ export default new Vuex.Store({
     strict: true,
 
     state: {
-        version: '0.25 /proxy',
+        version: '0.26 /online',
         startAs: "",
         debug: true,
 
@@ -381,12 +381,13 @@ export default new Vuex.Store({
         },
 
         setDeviceStatus(state, data) {
+            // window.console.log("setDeviceStatus:", data);
             for (let k = 0; k < state.deviceList.length; k++) {
                 if (state.deviceList[k].type == data.type &&
                     state.deviceList[k].devId == data.devId) {
-
-                    if (state.deviceList[k].online != (data.state != 'offline')) {
-                        state.deviceList[k].online = (data.state != 'offline');
+                    // window.console.log("Device:", state.deviceList[k]);
+                    if (state.deviceList[k].online != (data.status.state != 'offline')) {
+                        state.deviceList[k].online = (data.status.state != 'offline');
 
                         window.console.log(
                             state.deviceList[k].type + '/' +

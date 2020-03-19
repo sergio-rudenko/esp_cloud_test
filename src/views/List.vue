@@ -9,35 +9,17 @@
             :key="i"
         >
             <v-card-title class="text-truncate font-weight-regular px-2 py-2">
-                {{ device.type + '/' + device.devId }}
+                {{ device.alias }}
             </v-card-title>
             <v-card-subtitle class="px-2 py-1">
-                {{ 'out ' + device.data.outputs }}
-                {{ 'inp ' + device.data.inputs }}
+                {{ device.description }}
             </v-card-subtitle>
+
+            <!-- <v-card-subtitle class="px-2 py-1">
+                {{ device.type + '/' + device.devId }}
+            </v-card-subtitle> -->
         </v-card>
     </div>
-
-    <!-- <v-list>
-            <v-list-item
-                v-for="(device, i) in devices"
-                :disabled="!device.online"
-                :key="i"
-                link
-            >
-                <v-list-item-content>
-                    <v-list-item-title>
-                        <span>
-                            {{ device.type + '/' + device.devId }}
-                        </span>
-                    </v-list-item-title>
-                    <v-list-item-content>
-                        {{ 'out ' + device.data.outputs }}
-                        {{ 'inp ' + device.data.inputs }}
-                    </v-list-item-content>
-                </v-list-item-content>
-            </v-list-item></v-list
-        > -->
 </template>
 
 <script>
